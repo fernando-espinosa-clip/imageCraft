@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Imagen - Elegante</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="upload-container">
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <div class="upload-box" id="upload-box">
+            <div class="upload-content" id="upload-content">
+                <i class="upload-icon"></i>
+                <p>Arrastra aquí tu imagen o</p>
+                <label for="file-upload" class="upload-btn">Selecciona un archivo</label>
+                <input type="file" id="file-upload" name="image" accept="image/*" />
+            </div>
+        </div>
+        <!-- Botón de envío -->
+        <button type="submit" id="submit-btn" disabled>Subir Imagen</button>
+    </form>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

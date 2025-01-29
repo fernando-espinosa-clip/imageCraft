@@ -7,10 +7,16 @@ import fs from "fs/promises";
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Servir contenido estático desde la carpeta "public"
+app.use(express.static("public"));
+
+// También servir archivos desde la carpeta "uploads" (opcional)
+app.use("/uploads", express.static("uploads"));
+
 // Configuración de Multer para el almacenamiento de archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Las imágenes se guardarán en la carpeta 'uploads'
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -21,7 +27,10 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 // Ruta para subir y optimizar imágenes
 app.post("/upload", upload.single("image"), async (req, res) => {
