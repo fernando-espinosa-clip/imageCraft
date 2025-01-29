@@ -19,7 +19,6 @@
         "message": "Asegúrate de especificar 'limits' en tu configuración de Multer."
       }
     ],
-    "security-node/detect-non-literal-fs-filename": "warn",
     "require-atomic-updates": "warn"
 
   }
