@@ -130,3 +130,4 @@ dist
 /.idea/
 ___eslint.config.mjs
 /uploads/
+.DS_Store
