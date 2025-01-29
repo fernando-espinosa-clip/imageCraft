@@ -131,3 +131,4 @@ dist
 ___eslint.config.mjs
 /uploads/
 .DS_Store
+dump.rdb
