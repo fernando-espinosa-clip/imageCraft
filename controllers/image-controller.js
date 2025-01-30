@@ -119,9 +119,12 @@ export class ImageController {
 
     try {
       const result = await this.imageService.listImages(limit, cursor);
-      const images = result.images.map((image) => `/images/${image}`);
       res.json({
-        images: images,
+        images: result.images.map((img) => ({
+          uri: `/images/${img.key}`,
+          lastModified: img.lastModified.toISOString(),
+          size: this.formatFileSize(img.size),
+        })),
         nextCursor: result.nextCursor,
         total: result.total,
       });
@@ -130,4 +133,11 @@ export class ImageController {
       res.status(500).send("Error al listar las imágenes");
     }
   };
+
+  formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + " bytes";
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + " MB";
+    else return (bytes / 1073741824).toFixed(1) + " GB";
+  }
 }

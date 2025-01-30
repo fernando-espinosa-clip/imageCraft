@@ -79,8 +79,15 @@ export class S3StorageStrategy {
     try {
       const data = await this.s3Client.send(command);
       console.log(data);
+      const images = data.Contents.map((object) => {
+        return {
+          key: object.Key,
+          lastModified: object.LastModified,
+          size: object.Size,
+        };
+      });
       return {
-        images: data.Contents?.map((object) => object.Key) || [],
+        images,
         nextCursor: data.NextContinuationToken,
       };
     } catch (error) {
@@ -123,8 +130,20 @@ export class LocalStorageStrategy {
       const startIndex = cursor ? imageFiles.indexOf(cursor) + 1 : 0;
       const paginatedFiles = imageFiles.slice(startIndex, startIndex + limit);
 
+      const images = await Promise.all(
+        paginatedFiles.map(async (file) => {
+          const filePath = path.join(this.storagePath, file);
+          const stats = await fs.stat(filePath);
+          return {
+            key: file,
+            lastModified: stats.mtime,
+            size: stats.size,
+          };
+        }),
+      );
+
       return {
-        images: paginatedFiles,
+        images,
         nextCursor:
           paginatedFiles.length === limit
             ? paginatedFiles[paginatedFiles.length - 1]
