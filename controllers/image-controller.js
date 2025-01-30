@@ -116,7 +116,7 @@ export class ImageController {
   listImages = async (req, res) => {
     try {
       let images = await this.imageService.listImages();
-      images = images.map((image) => `/image/${image}`);
+      images = images.map((image) => `/images/${image}`);
       res.json({ images });
     } catch (error) {
       console.error("Error al listar las imágenes:", error);

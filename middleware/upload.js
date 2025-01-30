@@ -1,13 +1,19 @@
 import multer from "multer";
 
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const allowedMimes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+  ];
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        "Tipo de archivo no válido. Solo se permiten imágenes (JPEG, PNG, GIF, WebP).",
+        "Tipo de archivo no válido. Solo se permiten imágenes (JPEG, PNG, GIF, WebP, SVG).",
       ),
       false,
     );
