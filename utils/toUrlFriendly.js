@@ -8,3 +8,4 @@ export function toUrlFriendly(text) {
     .replace(/\s+/g, "-") // Reemplazar espacios por guiones
     .replace(/-+/g, "-"); // Eliminar guiones duplicados
 }
+export default toUrlFriendly;
