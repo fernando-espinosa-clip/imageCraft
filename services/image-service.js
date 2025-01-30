@@ -57,9 +57,9 @@ export class ImageService {
     }
   }
 
-  async listImages() {
+  async listImages(limit, cursor) {
     try {
-      return await this.storageStrategy.list();
+      return await this.storageStrategy.list(limit, cursor);
     } catch (error) {
       console.error("Error al listar las imágenes:", error);
       throw error;

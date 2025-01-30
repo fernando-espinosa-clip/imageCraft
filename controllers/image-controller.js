@@ -114,10 +114,17 @@ export class ImageController {
   };
 
   listImages = async (req, res) => {
+    const limit = Number.parseInt(req.query.limit) || 10;
+    const cursor = req.query.cursor;
+
     try {
-      let images = await this.imageService.listImages();
-      images = images.map((image) => `/images/${image}`);
-      res.json({ images });
+      const result = await this.imageService.listImages(limit, cursor);
+      const images = result.images.map((image) => `/images/${image}`);
+      res.json({
+        images: images,
+        nextCursor: result.nextCursor,
+        total: result.total,
+      });
     } catch (error) {
       console.error("Error al listar las imágenes:", error);
       res.status(500).send("Error al listar las imágenes");

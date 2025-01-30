@@ -69,14 +69,20 @@ export class S3StorageStrategy {
     );
   }
 
-  async list() {
+  async list(limit, cursor) {
     const command = new ListObjectsV2Command({
       Bucket: this.bucketName,
+      MaxKeys: limit,
+      ContinuationToken: cursor,
     });
 
     try {
       const data = await this.s3Client.send(command);
-      return data.Contents?.map((object) => object.Key) || [];
+      console.log(data);
+      return {
+        images: data.Contents?.map((object) => object.Key) || [],
+        nextCursor: data.NextContinuationToken,
+      };
     } catch (error) {
       console.error("Error listing objects from S3", error);
       throw error;
@@ -106,13 +112,25 @@ export class LocalStorageStrategy {
     await fs.unlink(filePath);
   }
 
-  async list() {
+  async list(limit, cursor) {
     try {
       const files = await fs.readdir(this.storagePath);
-      return files.filter((file) => {
+      const imageFiles = files.filter((file) => {
         const ext = path.extname(file).toLowerCase();
         return [".jpg", ".jpeg", ".png", ".gif", ".webp"].includes(ext);
       });
+
+      const startIndex = cursor ? imageFiles.indexOf(cursor) + 1 : 0;
+      const paginatedFiles = imageFiles.slice(startIndex, startIndex + limit);
+
+      return {
+        images: paginatedFiles,
+        nextCursor:
+          paginatedFiles.length === limit
+            ? paginatedFiles[paginatedFiles.length - 1]
+            : undefined,
+        total: imageFiles.length,
+      };
     } catch (error) {
       console.error("Error listing files from local storage", error);
       throw error;
