@@ -95,19 +95,6 @@ const upload = multer({
   },
 });
 
-/* const upload = multer({
-  storage: multer.memoryStorage(),
-  fileFilter: (req, file, cb) => {
-    console.log("Validando tipo de archivo:", file.mimetype);
-    // Aceptar solo archivos de tipo imagen
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Solo se permiten archivos de imagen."), false);
-    }
-  },
-}); */
-
 // Función para generar token JWT
 function generateToken(user) {
   const api = encrypt(user.apiKey);
@@ -195,10 +182,6 @@ async function uploadToS3(file, filename) {
 // Función para procesar y subir una imagen
 async function processAndUploadImage(file) {
   const { originalname, buffer } = file;
-  /*const filename = `optimized-${Date.now()}-${path.basename(
-    originalname,
-    path.extname(originalname),
-  )}.webp`;*/
 
   const filename = `${toUrlFriendly(
     path.basename(originalname, path.extname(originalname)),
@@ -206,7 +189,6 @@ async function processAndUploadImage(file) {
 
   try {
     const optimizedImageBuffer = await sharp(buffer)
-      //.resize(800)
       .webp({ quality: 80 })
       .toBuffer();
 
@@ -404,7 +386,7 @@ app.delete("/image/:key", authenticateJWT(["delete"]), async (req, res) => {
 });
 
 // Middleware de manejo de errores
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error("Error capturado:", err);
 
   if (err instanceof multer.MulterError) {
