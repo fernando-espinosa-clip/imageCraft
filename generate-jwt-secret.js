@@ -8,8 +8,7 @@ const envFilePath = path.resolve(process.cwd(), ".env");
 // Función para generar un secreto JWT seguro
 function generateJWTSecret() {
   // Generar un secreto seguro con 64 bytes de entropía
-  const secret = crypto.randomBytes(64).toString("hex");
-  return secret;
+  return crypto.randomBytes(64).toString("hex");
 }
 
 // Guardar el secreto en .env
