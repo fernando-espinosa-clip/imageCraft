@@ -8,6 +8,7 @@ export class ImageController {
     this.upload = this.upload.bind(this);
     this.getImage = this.getImage.bind(this);
     this.deleteImage = this.deleteImage.bind(this);
+    this.listImages = this.listImages.bind(this);
   }
 
   upload = async (req, res) => {
@@ -109,6 +110,17 @@ export class ImageController {
     } catch (error) {
       console.error("Error al eliminar la imagen:", error);
       res.status(500).send("Error al eliminar la imagen y sus cachés");
+    }
+  };
+
+  listImages = async (req, res) => {
+    try {
+      let images = await this.imageService.listImages();
+      images = images.map((image) => `/image/${image}`);
+      res.json({ images });
+    } catch (error) {
+      console.error("Error al listar las imágenes:", error);
+      res.status(500).send("Error al listar las imágenes");
     }
   };
 }

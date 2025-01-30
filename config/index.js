@@ -19,4 +19,16 @@ export default {
     user1: process.env.API_KEY_USER_1,
     user2: process.env.API_KEY_USER_2,
   },
+  users: [
+    {
+      id: 1,
+      apiKey: process.env.API_KEY_USER_1,
+      permissions: ["upload", "delete", "list"],
+    },
+    {
+      id: 2,
+      apiKey: process.env.API_KEY_USER_2,
+      permissions: ["upload", "list"],
+    },
+  ],
 };

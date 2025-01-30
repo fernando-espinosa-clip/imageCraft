@@ -56,4 +56,13 @@ export class ImageService {
       throw error;
     }
   }
+
+  async listImages() {
+    try {
+      return await this.storageStrategy.list();
+    } catch (error) {
+      console.error("Error al listar las imágenes:", error);
+      throw error;
+    }
+  }
 }

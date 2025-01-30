@@ -2,12 +2,11 @@ import {
   S3Client,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import fs from "fs/promises";
 import path from "path";
-import { enlistPermissions } from "../utils/directoryContent.js";
-import config from "../config/index.js";
 
 // Implementación de la estrategia para S3
 export class S3StorageStrategy {
@@ -69,6 +68,20 @@ export class S3StorageStrategy {
       }),
     );
   }
+
+  async list() {
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucketName,
+    });
+
+    try {
+      const data = await this.s3Client.send(command);
+      return data.Contents?.map((object) => object.Key) || [];
+    } catch (error) {
+      console.error("Error listing objects from S3", error);
+      throw error;
+    }
+  }
 }
 
 // Implementación de la estrategia para almacenamiento local
@@ -78,8 +91,6 @@ export class LocalStorageStrategy {
   }
 
   async upload(file, filename) {
-    const permisos = await enlistPermissions(config.localStoragePath);
-    console.log(`Permisos para ${config.localStoragePath}: ${permisos}`);
     const filePath = path.join(this.storagePath, filename);
     await fs.writeFile(filePath, file);
     return filePath;
@@ -93,5 +104,18 @@ export class LocalStorageStrategy {
   async delete(filename) {
     const filePath = path.join(this.storagePath, filename);
     await fs.unlink(filePath);
+  }
+
+  async list() {
+    try {
+      const files = await fs.readdir(this.storagePath);
+      return files.filter((file) => {
+        const ext = path.extname(file).toLowerCase();
+        return [".jpg", ".jpeg", ".png", ".gif", ".webp"].includes(ext);
+      });
+    } catch (error) {
+      console.error("Error listing files from local storage", error);
+      throw error;
+    }
   }
 }
