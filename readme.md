@@ -8,20 +8,20 @@
 ```
 # ImageCraft
 
-**ImageCraft** es una aplicación diseñada para la manipulación y almacenamiento eficiente de imágenes, combinando funcionalidad avanzada con un diseño centrado en el rendimiento y escalabilidad. Esta aplicación está diseñada para ofrecer una solución robusta que incluye carga, edición, optimización y almacenamiento de imágenes.
+**ImageCraft** es una aplicación diseñada para la manipulación y almacenamiento eficiente de imágenes, combinando funcionalidad avanzada con un diseño centrado en el rendimiento y escalabilidad. Se ofrecen características robustas como carga, edición, optimización y almacenamiento de imágenes en múltiples plataformas.
 
 ---
 
 ## Características
 
 - **Carga eficiente de imágenes**: Soporta múltiples formatos de imagen (JPEG, PNG, etc.) utilizando `multer` para la carga de archivos.
-- **Optimización de imágenes**: Reducción de tamaño y optimización del formato de imágenes con la librería `sharp`.
+- **Optimización de imágenes**: Reducción de tamaño y conversión a formato `.webp` con la librería `sharp`.
 - **Almacenamiento múltiple**:
-    - **En la nube**: Integra Amazon S3, utilizando `@aws-sdk/client-s3` y `@aws-sdk/lib-storage`, para un almacenamiento seguro y escalable.
-    - **Almacenamiento local**: Permite guardar las imágenes directamente en el sistema de archivos local del servidor.
-- **JWT-based Authentication**: Garantiza el acceso seguro al usar tokens JWT para gestionar usuarios y permisos de carga.
-- **Gestión de permisos**: Implementa lógicas seguras para usuarios y administradores.
-- **Configuración personalizable**: Gestión centralizada de configuraciones utilizando el paquete `dotenv`.
+    - **En la nube**: Utiliza Amazon S3 con `@aws-sdk/client-s3` y `@aws-sdk/lib-storage` para un almacenamiento seguro.
+    - **Almacenamiento local**: Permite guardar las imágenes directamente en el servidor.
+- **JWT-based Authentication**: Garantiza la seguridad de la API con tokens JWT.
+- **Gestión de permisos**: Implementa controles para acceso seguro entre administradores y usuarios.
+- **Configuración personalizable**: Configuración centralizada mediante el uso de variables de entorno con `dotenv`.
 
 ---
 
@@ -67,67 +67,44 @@
 
 ## Dependencias
 
-A continuación, las principales librerías utilizadas:
+A continuación, algunas de las principales librerías utilizadas:
 
-- **`express`**: Framework para construir la API.
+- **`express`**: Framework para la creación del API.
 - **`multer`**: Para la carga de archivos (imágenes).
-- **`sharp`**: Optimización y procesamiento de imágenes.
-- **`@aws-sdk/client-s3`**: Para interacciones con Amazon S3.
+- **`sharp`**: Para la optimización y procesamiento de imágenes.
+- **`@aws-sdk/client-s3`**: Para trabajar con Amazon S3.
 - **`redis`**: Sistema de almacenamiento en caché para mejorar el rendimiento.
-- **`jsonwebtoken`**: Para la autenticación basada en tokens JWT.
-- **`dotenv`**: Para la configuración de variables de entorno.
-- **`eslint` + `eslint-config-prettier`**: Para garantizar código limpio y con buenas prácticas de estilo.
+- **`jsonwebtoken`**: Para usar tokens JWT como método de autenticación.
+- **`dotenv`**: Para configurar variables de entorno.
+- **`eslint` + `eslint-config-prettier`**: Para mantener un código limpio y con buenas prácticas.
 
 ---
 
 ## Configuración de CORS
 
-El middleware **CORS** (*Cross-Origin Resource Sharing*) está configurado en el proyecto para definir qué dominios pueden interactuar con la API de ImageCraft desde diferentes orígenes. Esto es importante para garantizar la seguridad y controlar qué clientes tienen permiso para hacer solicitudes al servidor.
+El middleware **CORS** (*Cross-Origin Resource Sharing*) define qué dominios pueden interactuar con la API desde diferentes orígenes. En este proyecto, se usa la librería [`cors`](https://www.npmjs.com/package/cors).
 
-### ¿Qué es CORS?
+### Configuración básica:
+1. **Lista blanca (whitelist):**  
+   Los dominios permitidos se definen en `CORS_WHITELIST` del archivo `.env`. Si no se configura, los valores por defecto son `http://localhost:5173` y `http://example.com`.
 
-CORS es un mecanismo que permite controlar el acceso de recursos hospedados en un servidor desde dominios diferentes al propio. Esto es útil cuando las aplicaciones (como frontend y backend) se encuentran hospedadas en dominios distintos.
-
-En este proyecto, utilizamos la librería [`cors`](https://www.npmjs.com/package/cors) para gestionar las políticas de CORS.
-
-### Configuración en el Proyecto
-
-La configuración de CORS se encuentra en el archivo `cors.js` dentro del proyecto. A continuación se describen los aspectos relevantes:
-
-1. **Lista blanca de dominios (whitelist):**  
-   Los dominios permitidos están definidos en la variable de entorno `CORS_WHITELIST` como una lista separada por comas. Si no se especifica, por defecto, solo están permitidos `http://localhost:5173` y `http://example.com`.
-
-2. **Opciones de CORS:**
-    - Solo se permite el acceso desde orígenes presentes en la lista blanca o solicitudes sin origen (por ejemplo, herramientas como Postman o cURL).
+2. **Opciones principales:**
     - Métodos permitidos: `GET`, `HEAD`, `PUT`, `PATCH`, `POST`, `DELETE`.
-    - Headers permitidos: `Content-Type` y `Authorization`.
-    - Se habilita el envío de credenciales (como cookies o tokens de autenticación).
+    - Headers permitidos: `Content-Type`, `Authorization`.
+    - Envío de credenciales habilitado para soportar cookies/tokens en solicitudes.
 
-3. **Manejo de errores:**  
-   Las solicitudes provenientes de dominios no autorizados reciben un error con el mensaje: `"No autorizado por política de CORS"`.
+3. **Respuesta de Error:**  
+   Solicitudes desde dominios no autorizados retornarán:
+   ```json
+   {
+     "error": "No autorizado por política de CORS"
+   }
+   ```
 
-4. **Autenticación de clientes:**  
-   Al utilizar credenciales o tokens JWT, se requiere que el cliente configure correctamente el uso de cookies o headers personalizados.
-
-### Ejemplo de .env
-
-Asegúrate de configurar la variable `CORS_WHITELIST` en tu archivo `.env`. Ejemplo:
+### Personalización en `.env`:
 ```env
 CORS_WHITELIST=http://localhost:5173,https://some-domain.org
 ```
-
-### Ejemplo de Respuesta a Solicitudes No Permitidas
-
-Si un cliente realiza una solicitud desde un origen no incluido en la lista blanca, recibirá una respuesta como la siguiente:
-```json
-{
-  "error": "No autorizado por política de CORS"
-}
-```
-
-### Personalización
-
-Puedes personalizar los dominios permitidos editando el archivo **`.env`** o directamente modificando el archivo de configuración `cors.js`.
 
 ---
 
@@ -149,19 +126,48 @@ Puedes personalizar los dominios permitidos editando el archivo **`.env`** o dir
 
 ---
 
+## Parámetros para Servir Imágenes
+
+El servicio procesa dinámicamente las imágenes solicitadas, permitiendo ajustar su tamaño, calidad y método de ajuste (*fit*) al momento de servirlas.
+
+### Parámetros Disponibles:
+
+1. **width (ancho):** Define el ancho de la imagen en píxeles.
+2. **height (alto):** Define el alto de la imagen en píxeles.
+3. **fit (ajuste):** Controla cómo ajustar la imagen:
+    - `cover` (por defecto): Recorta para llenar el espacio.
+    - `contain`: Ajusta la imagen sin recortarla.
+    - `fill`: Rellena el espacio aunque haya distorsión.
+    - `inside`: Encaja dentro de las dimensiones sin desbordar.
+    - `outside`: Puede salir del espacio, pero conserva proporción.
+4. **quality (calidad):** Calidad para imágenes `.webp` (1-100, por defecto **80**).
+
+### Ejemplo de Uso:
+Solicitud con parámetros:
+```http
+GET /images/example-image.webp?width=400&height=300&fit=contain&quality=70
+```
+
+### Comportamiento por Omisión:
+- **width/height:** Si no se incluyen, no se aplica redimensionado.
+- **fit:** Valor por defecto: `cover`.
+- **quality:** Valor por defecto: `80`.
+
+---
+
 ## Almacenamiento
 
-ImageCraft permite configurar dónde se almacenarán las imágenes:
+### Opciones Disponibles:
 
 1. **Almacenamiento en la Nube**:  
-   Las imágenes se almacenan en un bucket de Amazon S3 (necesitarás configurar tus credenciales en `.env`).
+   Las imágenes se alojarán en Amazon S3 (necesita configuración en `.env`).
 
 2. **Almacenamiento Local**:  
-   Las imágenes se guardan localmente en una carpeta especificada (la ruta se define en la variable `LOCAL_UPLOAD_FOLDER`).
+   Las imágenes se guardan en una carpeta local definida por `LOCAL_UPLOAD_FOLDER`.
 
-Configura el tipo de almacenamiento cambiando el valor de la variable `STORAGE_TYPE` en tu archivo `.env`:
-- **`local`**: Para almacenamiento local.
-- **`s3`**: Para almacenamiento en la nube (Amazon S3).
+Para configurar el tipo de almacenamiento, ajusta la variable en `.env`:
+- `STORAGE_TYPE=local` para almacenamiento local.
+- `STORAGE_TYPE=s3` para usar Amazon S3.
 
 ---
 
@@ -191,12 +197,14 @@ Configura el tipo de almacenamiento cambiando el valor de la variable `STORAGE_T
    ```bash
    git push origin feature/nueva-funcionalidad
    ```
-5. Abre un Pull Request (PR) hacia la rama principal.
+5. Abre un Pull Request hacia la rama principal.
 
 ---
 
 ## Licencia
 
-**ImageCraft** está licenciado bajo la [MIT License](LICENSE). Siéntete libre de usar, modificar y distribuir esta aplicación según los términos de la licencia.
+**ImageCraft** está licenciado bajo la [MIT License](LICENSE). Puedes usar, modificar y distribuir esta aplicación según los términos de la licencia.
 
 ---
+
+**GitHub**: [Repositorio Oficial](https://github.com/tuusuario/imagecraft)
