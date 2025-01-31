@@ -133,3 +133,4 @@ ___eslint.config.mjs
 .DS_Store
 dump.rdb
 .vercel
+*.sqlite
