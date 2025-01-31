@@ -4,9 +4,10 @@ import { generateToken } from "../utils/jwt.js";
 export class UserService {
   async createUser(user) {
     const db = await getDatabase();
-    const result = await db.run(
+    const result = await db.query(
       `INSERT INTO users (first_name, last_name, email, apikey, username, file_permissions)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?)
+         RETURNING id`,
       [
         user.first_name,
         user.last_name,
@@ -16,12 +17,14 @@ export class UserService {
         JSON.stringify(user.file_permissions),
       ],
     );
-    return { ...user, id: result.lastID };
+    return { ...user, id: result[0].id };
   }
 
   async getUserByApiKey(apiKey) {
     const db = await getDatabase();
-    const user = await db.get("SELECT * FROM users WHERE apikey = ?", apiKey);
+    const [user] = await db.query("SELECT * FROM users WHERE apikey = ?", [
+      apiKey,
+    ]);
     return user
       ? { ...user, file_permissions: JSON.parse(user.file_permissions) }
       : null;
@@ -29,7 +32,7 @@ export class UserService {
 
   async getUserById(id) {
     const db = await getDatabase();
-    const user = await db.get("SELECT * FROM users WHERE id = ?", id);
+    const [user] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
     return user
       ? { ...user, file_permissions: JSON.parse(user.file_permissions) }
       : null;

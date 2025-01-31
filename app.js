@@ -12,7 +12,7 @@ import { createImageRouter } from "./routes/image-routes.js";
 import globalErrorHandling from "./middleware/globalErrorHandling.js";
 import corsMiddleware from "./middleware/cors.js";
 import { createDir } from "./utils/directoryContent.js";
-import { initializeDatabase } from "./services/database.js";
+import { initializeDatabase, closeDatabase } from "./services/database.js";
 
 const app = express();
 
@@ -55,5 +55,10 @@ const startServer = async () => {
 };
 
 startServer();
+
+process.on("SIGINT", async () => {
+  await closeDatabase();
+  process.exit(0);
+});
 
 export default app;

@@ -23,7 +23,7 @@ export class ImageService {
       );
 
       const db = await getDatabase();
-      await db.run(
+      await db.query(
         `INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -67,7 +67,7 @@ export class ImageService {
     try {
       await this.storageStrategy.delete(key);
       const db = await getDatabase();
-      await db.run("DELETE FROM images WHERE filename = ? AND user_id = ?", [
+      await db.query("DELETE FROM images WHERE filename = ? AND user_id = ?", [
         key,
         userId,
       ]);
@@ -82,7 +82,7 @@ export class ImageService {
       const db = await getDatabase();
       const query = `
         SELECT * FROM images
-        ${userId ? "WHERE user_id = ?" : ""}
+                        ${userId ? "WHERE user_id = ?" : ""}
         ORDER BY id
         LIMIT ? ${cursor ? "OFFSET ?" : ""}
       `;
@@ -90,13 +90,13 @@ export class ImageService {
         ? [userId, limit, cursor]
         : [limit, cursor].filter(Boolean);
 
-      const images = await db.all(query, params);
+      const images = await db.query(query, params);
       const nextCursor =
         images.length === limit ? limit + (cursor || 0) : undefined;
 
       const totalQuery = `SELECT COUNT(*) as count FROM images ${userId ? "WHERE user_id = ?" : ""}`;
       const totalParams = userId ? [userId] : [];
-      const { count } = await db.get(totalQuery, totalParams);
+      const [{ count }] = await db.query(totalQuery, totalParams);
 
       return {
         images: images.map((img) => ({
