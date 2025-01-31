@@ -78,7 +78,6 @@ export class S3StorageStrategy {
 
     try {
       const data = await this.s3Client.send(command);
-      console.log(data);
       const images = data.Contents.map((object) => {
         return {
           key: object.Key,

@@ -12,6 +12,7 @@ import { createImageRouter } from "./routes/image-routes.js";
 import globalErrorHandling from "./middleware/globalErrorHandling.js";
 import corsMiddleware from "./middleware/cors.js";
 import { createDir } from "./utils/directoryContent.js";
+import { initializeDatabase } from "./services/database.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/images", createImageRouter(imageController));
 // Iniciar el servidor
 const startServer = async () => {
   try {
+    await initializeDatabase();
     await cacheService.connect();
     app.listen(config.port, () => {
       console.log(`Servidor corriendo en http://localhost:${config.port}`);

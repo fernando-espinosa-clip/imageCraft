@@ -17,7 +17,7 @@ export const createImageRouter = (imageController) => {
     authenticateJWT(["delete"]),
     imageController.deleteImage,
   );
-  router.get("/", authenticateJWT(["list"]), imageController.listImages);
+  router.get("/", imageController.listImages);
 
   return router;
 };

@@ -20,7 +20,7 @@ export class ImageController {
 
     try {
       const uploadPromises = req.files.map((file) =>
-        this.imageService.processAndUploadImage(file),
+        this.imageService.processAndUploadImage(file, req.user.userId),
       );
       const results = await Promise.all(uploadPromises);
 
@@ -101,7 +101,7 @@ export class ImageController {
     const { key } = req.params;
 
     try {
-      await this.imageService.deleteImage(key);
+      await this.imageService.deleteImage(key, req.user?.userId || 10);
 
       const keys = await cacheService.keys(`${key}-*`);
       await cacheService.del(keys);
@@ -124,6 +124,8 @@ export class ImageController {
           uri: `/images/${img.key}`,
           lastModified: img.lastModified.toISOString(),
           size: this.formatFileSize(img.size),
+          originalMimetype: img.original_file_type,
+          originalSize: this.formatFileSize(img.original_size),
         })),
         nextCursor: result.nextCursor,
         total: result.total,
