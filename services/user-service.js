@@ -6,7 +6,7 @@ export class UserService {
     const db = await getDatabase();
     const result = await db.run(
       `INSERT INTO users (first_name, last_name, email, apikey, username, file_permissions)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?)`,
       [
         user.first_name,
         user.last_name,
@@ -22,36 +22,27 @@ export class UserService {
   async getUserByApiKey(apiKey) {
     const db = await getDatabase();
     const user = await db.get("SELECT * FROM users WHERE apikey = ?", apiKey);
-    if (user) {
-      return {
-        ...user,
-      };
-    }
-    return null;
+    return user
+      ? { ...user, file_permissions: JSON.parse(user.file_permissions) }
+      : null;
   }
 
   async getUserById(id) {
     const db = await getDatabase();
     const user = await db.get("SELECT * FROM users WHERE id = ?", id);
-    if (user) {
-      return {
-        ...user,
-      };
-    }
-    return null;
+    return user
+      ? { ...user, file_permissions: JSON.parse(user.file_permissions) }
+      : null;
   }
 
   async authenticateUserByApiKey(apiKey) {
     const user = await this.getUserByApiKey(apiKey);
+    if (!user) return null;
 
-    if (user) {
-      return generateToken({
-        id: user.id,
-        permissions: user.file_permissions,
-        apiKey: user.apikey,
-      });
-    }
-
-    return null;
+    return generateToken({
+      id: user.id,
+      permissions: user.file_permissions,
+      apiKey: user.apikey,
+    });
   }
 }

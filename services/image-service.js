@@ -10,9 +10,7 @@ export class ImageService {
 
   async processAndUploadImage(file, userId) {
     const { originalname, buffer, mimetype, size } = file;
-    const filename = `${toUrlFriendly(
-      path.basename(originalname, path.extname(originalname)),
-    )}.webp`;
+    const filename = `${toUrlFriendly(path.parse(originalname).name)}.webp`;
 
     try {
       const optimizedImageBuffer = await sharp(buffer)
@@ -27,7 +25,7 @@ export class ImageService {
       const db = await getDatabase();
       await db.run(
         `INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           filename,
@@ -42,15 +40,14 @@ export class ImageService {
 
       return { filename, url };
     } catch (error) {
-      console.error("Error al procesar o subir la imagen:", error);
-      throw error;
+      console.error("Error processing or uploading image:", error);
+      throw new Error("Failed to process or upload image");
     }
   }
 
   async getOrProcessImage(key, params) {
     try {
       const buffer = await this.storageStrategy.get(key);
-
       return await sharp(buffer)
         .resize({
           width: params.width,
@@ -61,45 +58,45 @@ export class ImageService {
         .webp({ quality: params.quality })
         .toBuffer();
     } catch (error) {
-      console.error("Error al obtener o procesar la imagen:", error);
-      throw error;
+      console.error("Error retrieving or processing image:", error);
+      throw new Error("Failed to retrieve or process image");
     }
   }
 
   async deleteImage(key, userId) {
     try {
       await this.storageStrategy.delete(key);
-
       const db = await getDatabase();
       await db.run("DELETE FROM images WHERE filename = ? AND user_id = ?", [
         key,
         userId,
       ]);
     } catch (error) {
-      console.error("Error al eliminar la imagen:", error);
-      throw error;
+      console.error("Error deleting image:", error);
+      throw new Error("Failed to delete image");
     }
   }
 
   async listImages(limit, cursor, userId) {
     try {
       const db = await getDatabase();
-      let query = "SELECT * FROM images";
-      const params = [];
-
-      if (userId) {
-        query += " WHERE user_id = ?";
-        params.push(userId);
-      }
-
-      query += " LIMIT ?" + (cursor ? " OFFSET ?" : "");
-      params.push(limit);
-      if (cursor) params.push(cursor);
+      const query = `
+        SELECT * FROM images
+        ${userId ? "WHERE user_id = ?" : ""}
+        ORDER BY id
+        LIMIT ? ${cursor ? "OFFSET ?" : ""}
+      `;
+      const params = userId
+        ? [userId, limit, cursor]
+        : [limit, cursor].filter(Boolean);
 
       const images = await db.all(query, params);
-
       const nextCursor =
-        images.length === limit ? limit + (cursor ? +cursor : 0) : undefined;
+        images.length === limit ? limit + (cursor || 0) : undefined;
+
+      const totalQuery = `SELECT COUNT(*) as count FROM images ${userId ? "WHERE user_id = ?" : ""}`;
+      const totalParams = userId ? [userId] : [];
+      const { count } = await db.get(totalQuery, totalParams);
 
       return {
         images: images.map((img) => ({
@@ -109,17 +106,11 @@ export class ImageService {
           size: img.size,
         })),
         nextCursor,
-        total: await db
-          .get(
-            "SELECT COUNT(*) as count FROM images" +
-              (userId ? " WHERE user_id = ?" : ""),
-            userId ? [userId] : [],
-          )
-          .then((result) => result.count),
+        total: count,
       };
     } catch (error) {
-      console.error("Error al listar las imágenes:", error);
-      throw error;
+      console.error("Error listing images:", error);
+      throw new Error("Failed to list images");
     }
   }
 }

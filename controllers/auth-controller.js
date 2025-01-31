@@ -3,19 +3,21 @@ import { generateToken } from "../utils/jwt.js";
 
 const userService = new UserService();
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   const { apiKey } = req.body;
+  if (!apiKey) {
+    return res.status(400).json({ error: "API key is required" });
+  }
+
   try {
     const token = await userService.authenticateUserByApiKey(apiKey);
-    console.log("token", token);
     if (token) {
       res.json({ token });
     } else {
-      res.status(401).json({ message: "API key inválida" });
+      res.status(401).json({ error: "Invalid API key" });
     }
   } catch (error) {
-    console.error("Error en el login:", error);
-    res.status(500).json({ message: "Error en el servidor" });
+    next(error);
   }
 };
 

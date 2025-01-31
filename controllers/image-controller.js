@@ -3,19 +3,11 @@ import { cacheService } from "../services/cache-service.js";
 export class ImageController {
   constructor(imageService) {
     this.imageService = imageService;
-
-    // Asignar métodos como arrow functions
-    this.upload = this.upload.bind(this);
-    this.getImage = this.getImage.bind(this);
-    this.deleteImage = this.deleteImage.bind(this);
-    this.listImages = this.listImages.bind(this);
   }
 
-  upload = async (req, res) => {
+  upload = async (req, res, next) => {
     if (!req.files || req.files.length === 0) {
-      return res
-        .status(400)
-        .send("No se han subido imágenes o los archivos no son válidos.");
+      return res.status(400).json({ error: "No valid images uploaded" });
     }
 
     try {
@@ -25,41 +17,37 @@ export class ImageController {
       const results = await Promise.all(uploadPromises);
 
       res.json({
-        message: "Imágenes procesadas y subidas exitosamente",
+        message: "Images processed and uploaded successfully",
         images: results,
       });
     } catch (error) {
-      console.error("Error al procesar o subir las imágenes:", error);
-      res.status(500).send("Error al procesar o subir las imágenes");
+      next(error);
     }
   };
 
-  getImage = async (req, res) => {
+  getImage = async (req, res, next) => {
     const { key } = req.params;
-    const scale = Number.parseInt(req.query.scale) || 1;
-    const width = req.query.width ? Number.parseInt(req.query.width) : null;
-    const height = req.query.height ? Number.parseInt(req.query.height) : null;
+    const scale = Number(req.query.scale) || 1;
+    const width = req.query.width ? Number(req.query.width) : null;
+    const height = req.query.height ? Number(req.query.height) : null;
     const fit = req.query.fit || "cover";
-    const quality = Number.parseInt(req.query.quality) || 80;
-    const maxScale = 5;
+    const quality = Number(req.query.quality) || 80;
 
-    if (scale < 1 || scale > maxScale) {
-      return res.status(400).send(`La escala debe estar entre 1 y ${maxScale}`);
+    if (scale < 1 || scale > 5) {
+      return res.status(400).json({ error: "Scale must be between 1 and 5" });
     }
 
     const validFitModes = ["cover", "contain", "fill", "inside", "outside"];
     if (!validFitModes.includes(fit)) {
-      return res
-        .status(400)
-        .send(
-          `Modo de ajuste no válido. Opciones válidas: ${validFitModes.join(
-            ", ",
-          )}`,
-        );
+      return res.status(400).json({
+        error: `Invalid fit mode. Valid options: ${validFitModes.join(", ")}`,
+      });
     }
 
     if (quality < 20 || quality > 80) {
-      return res.status(400).send("La calidad debe estar entre 20 y 80");
+      return res
+        .status(400)
+        .json({ error: "Quality must be between 20 and 80" });
     }
 
     try {
@@ -73,12 +61,10 @@ export class ImageController {
       const cachedImage = await cacheService.get(hash);
 
       if (cachedImage) {
-        console.log("Imagen servida desde Redis");
         res.contentType("image/webp");
         return res.send(Buffer.from(cachedImage, "base64"));
       }
 
-      console.log("Procesando nueva imagen");
       const image = await this.imageService.getOrProcessImage(key, {
         width,
         height,
@@ -86,39 +72,41 @@ export class ImageController {
         scale,
         quality,
       });
-
-      await cacheService.set(hash, image.toString("base64"), 3600); // Expira en 1 hora
+      await cacheService.set(hash, image.toString("base64"), 3600);
 
       res.contentType("image/webp");
       res.send(image);
     } catch (error) {
-      console.error("Error al obtener o procesar la imagen:", error);
-      res.status(500).send("Error al obtener la imagen");
+      next(error);
     }
   };
 
-  deleteImage = async (req, res) => {
+  deleteImage = async (req, res, next) => {
     const { key } = req.params;
 
     try {
-      await this.imageService.deleteImage(key, req.user?.userId || 10);
+      await this.imageService.deleteImage(key, req.user?.userId);
+      const cacheKeys = await cacheService.keys(`${key}-*`);
+      await cacheService.del(cacheKeys);
 
-      const keys = await cacheService.keys(`${key}-*`);
-      await cacheService.del(keys);
-
-      res.send(`Imagen ${key} y sus cachés han sido eliminados correctamente.`);
+      res.json({
+        message: `Image ${key} and its caches have been successfully deleted.`,
+      });
     } catch (error) {
-      console.error("Error al eliminar la imagen:", error);
-      res.status(500).send("Error al eliminar la imagen y sus cachés");
+      next(error);
     }
   };
 
-  listImages = async (req, res) => {
-    const limit = Number.parseInt(req.query.limit) || 10;
+  listImages = async (req, res, next) => {
+    const limit = Number(req.query.limit) || 10;
     const cursor = req.query.cursor;
 
     try {
-      const result = await this.imageService.listImages(limit, cursor);
+      const result = await this.imageService.listImages(
+        limit,
+        cursor,
+        req.user?.userId,
+      );
       res.json({
         images: result.images.map((img) => ({
           uri: `/images/${img.key}`,
@@ -131,15 +119,17 @@ export class ImageController {
         total: result.total,
       });
     } catch (error) {
-      console.error("Error al listar las imágenes:", error);
-      res.status(500).send("Error al listar las imágenes");
+      next(error);
     }
   };
 
   formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + " bytes";
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
-    else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + " MB";
-    else return (bytes / 1073741824).toFixed(1) + " GB";
+    const units = ["bytes", "KB", "MB", "GB"];
+    let i = 0;
+    while (bytes >= 1024 && i < units.length - 1) {
+      bytes /= 1024;
+      i++;
+    }
+    return `${bytes.toFixed(1)} ${units[i]}`;
   }
 }

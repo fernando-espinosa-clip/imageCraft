@@ -16,55 +16,44 @@ import { initializeDatabase } from "./services/database.js";
 
 const app = express();
 
-// Middleware de CORS
 app.use(corsMiddleware);
-
-// Middleware para parsear JSON
 app.use(express.json());
 
-// Configuración de la estrategia de almacenamiento
-let storageStrategy;
-if (config.storageType === "s3") {
-  storageStrategy = new S3StorageStrategy(
-    config.s3.region,
-    config.s3.accessKeyId,
-    config.s3.secretAccessKey,
-    config.s3.bucketName,
-  );
-} else {
-  storageStrategy = new LocalStorageStrategy(config.localStoragePath);
+const storageStrategy =
+  config.storageType === "s3"
+    ? new S3StorageStrategy(
+        config.s3.region,
+        config.s3.accessKeyId,
+        config.s3.secretAccessKey,
+        config.s3.bucketName,
+      )
+    : new LocalStorageStrategy(config.localStoragePath);
+
+if (config.storageType !== "s3") {
   createDir(config.localStoragePath, "0755");
 }
 
 const imageService = new ImageService(storageStrategy);
-
 const imageController = new ImageController(imageService);
 
-// Rutas
 app.use("/auth", authRoutes);
 app.use("/images", createImageRouter(imageController));
 
-// Iniciar el servidor
+app.use(globalErrorHandling);
+
 const startServer = async () => {
   try {
     await initializeDatabase();
     await cacheService.connect();
     app.listen(config.port, () => {
-      console.log(`Servidor corriendo en http://localhost:${config.port}`);
+      console.log(`Server running at http://localhost:${config.port}`);
     });
   } catch (error) {
-    console.error("Error al iniciar el servidor:", error);
+    console.error("Error starting server:", error);
     process.exit(1);
   }
 };
 
-app.use(globalErrorHandling);
+startServer();
 
-// Ejemplo de uso
-(async () => {
-  try {
-    await startServer();
-  } catch (error) {
-    console.error(error.message);
-  }
-})();
+export default app;
