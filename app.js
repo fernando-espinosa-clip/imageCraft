@@ -62,11 +62,6 @@ app.use(globalErrorHandling);
 (async () => {
   try {
     await startServer();
-    /* const contenidos = await directoryContent(config.localStoragePath);
-    const permisos = await obtenerPermisos(config.localStoragePath);
-    console.log(`Permisos para ${config.localStoragePath}: ${permisos}`);
-
-    console.log("Contenidos del directorio:", contenidos); */
   } catch (error) {
     console.error(error.message);
   }
