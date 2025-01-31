@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import pg from "pg";
 
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
@@ -107,8 +108,18 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
   }
 
   async connect() {
-    const { Pool } = await import("pg");
-    this.pool = new Pool(this.config);
+    // Verificar si estamos en modo de desarrollo
+    const isDevelopment = process.env.NODE_ENV === "development";
+
+    // Determinar la configuración de SSL según el entorno
+    const sslConfig = isDevelopment
+      ? { rejectUnauthorized: false } // Solo en desarrollo
+      : undefined; // No se incluye en producción
+
+    this.pool = new pg.Pool({
+      ...this.config,
+      ...(sslConfig && { ssl: sslConfig }), // Adjuntar `ssl` solo si está definido
+    });
   }
 
   async disconnect() {

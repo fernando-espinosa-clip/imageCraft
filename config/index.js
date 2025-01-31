@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 export default {
+  env: process.env.NODE_ENV,
   port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET,
   redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
