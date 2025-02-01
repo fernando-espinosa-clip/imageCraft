@@ -3,7 +3,6 @@ import pg from "pg";
 
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
-import appConfig from "../config/index.js";
 
 export class DatabaseStrategy {
   async connect() {
@@ -109,18 +108,11 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
   }
 
   async connect() {
-    // Verificar si estamos en modo de desarrollo
-    console.log(appConfig);
-    const isDevelopment = appConfig.env === "development";
-
-    // Determinar la configuración de SSL según el entorno
-    const sslConfig = isDevelopment
-      ? { rejectUnauthorized: false } // Solo en desarrollo
-      : undefined; // No se incluye en producción
-
     this.pool = new pg.Pool({
       ...this.config,
-      ...(sslConfig && { ssl: sslConfig }), // Adjuntar `ssl` solo si está definido
+      ssl: {
+        rejectUnauthorized: false, // Permite conexiones sin verificar el certificado (útil en desarrollo)
+      },
     });
   }
 
