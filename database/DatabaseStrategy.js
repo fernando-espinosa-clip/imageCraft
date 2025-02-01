@@ -110,7 +110,7 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
 
   async connect() {
     // Verificar si estamos en modo de desarrollo
-    console.log(config);
+    console.log(appConfig);
     const isDevelopment = appConfig.env === "development";
 
     // Determinar la configuración de SSL según el entorno

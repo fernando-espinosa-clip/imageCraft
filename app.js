@@ -16,6 +16,9 @@ import { initializeDatabase, closeDatabase } from "./services/database.js";
 
 const app = express();
 
+console.log("arrancando....");
+console.log(config);
+
 app.use(corsMiddleware);
 app.use(express.json());
 
