@@ -3,6 +3,7 @@ import pg from "pg";
 
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
+import appConfig from "../config/index.js";
 
 export class DatabaseStrategy {
   async connect() {
@@ -109,7 +110,8 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
 
   async connect() {
     // Verificar si estamos en modo de desarrollo
-    const isDevelopment = process.env.NODE_ENV === "development";
+    console.log(config);
+    const isDevelopment = appConfig.env === "development";
 
     // Determinar la configuración de SSL según el entorno
     const sslConfig = isDevelopment
