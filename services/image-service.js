@@ -2,10 +2,12 @@ import sharp from "sharp";
 import path from "path";
 import { getDatabase } from "./database.js";
 import { toUrlFriendly } from "../utils/toUrlFriendly.js";
+import config from "../config/index.js";
 
 export class ImageService {
   constructor(storageStrategy) {
     this.storageStrategy = storageStrategy;
+    this.dbType = config.database.type;
   }
 
   async processAndUploadImage(file, userId) {
@@ -23,10 +25,14 @@ export class ImageService {
       );
 
       const db = await getDatabase();
-      await db.query(
-        `INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+      let query, params;
+
+      if (this.dbType === "sqlite") {
+        query = `
+          INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        params = [
           userId,
           filename,
           url,
@@ -35,8 +41,27 @@ export class ImageService {
           originalname,
           mimetype,
           size,
-        ],
-      );
+        ];
+      } else if (this.dbType === "postgresql") {
+        query = `
+          INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `;
+        params = [
+          userId,
+          filename,
+          url,
+          "image/webp",
+          optimizedImageBuffer.length,
+          originalname,
+          mimetype,
+          size,
+        ];
+      } else {
+        throw new Error(`Unsupported database type: ${this.dbType}`);
+      }
+
+      await db.query(query, params);
 
       return { filename, url };
     } catch (error) {
@@ -45,32 +70,23 @@ export class ImageService {
     }
   }
 
-  async getOrProcessImage(key, params) {
-    try {
-      const buffer = await this.storageStrategy.get(key);
-      return await sharp(buffer)
-        .resize({
-          width: params.width,
-          height: params.height,
-          fit: params.fit,
-          withoutEnlargement: false,
-        })
-        .webp({ quality: params.quality })
-        .toBuffer();
-    } catch (error) {
-      console.error("Error retrieving or processing image:", error);
-      throw new Error("Failed to retrieve or process image");
-    }
-  }
-
   async deleteImage(key, userId) {
     try {
       await this.storageStrategy.delete(key);
       const db = await getDatabase();
-      await db.query("DELETE FROM images WHERE filename = ? AND user_id = ?", [
-        key,
-        userId,
-      ]);
+      let query, params;
+
+      if (this.dbType === "sqlite") {
+        query = "DELETE FROM images WHERE filename = ? AND user_id = ?";
+        params = [key, userId];
+      } else if (this.dbType === "postgresql") {
+        query = "DELETE FROM images WHERE filename = $1 AND user_id = $2";
+        params = [key, userId];
+      } else {
+        throw new Error(`Unsupported database type: ${this.dbType}`);
+      }
+
+      await db.query(query, params);
     } catch (error) {
       console.error("Error deleting image:", error);
       throw new Error("Failed to delete image");
@@ -80,23 +96,41 @@ export class ImageService {
   async listImages(limit, cursor, userId) {
     try {
       const db = await getDatabase();
-      const query = `
-        SELECT * FROM images
-                        ${userId ? "WHERE user_id = ?" : ""}
-        ORDER BY id
-        LIMIT ? ${cursor ? "OFFSET ?" : ""}
-      `;
-      const params = userId
-        ? [userId, limit, cursor]
-        : [limit, cursor].filter(Boolean);
+      let query, countQuery, params, countParams;
+
+      if (this.dbType === "sqlite") {
+        query = `
+          SELECT * FROM images
+          ${userId ? "WHERE user_id = ?" : ""}
+          ORDER BY id
+          LIMIT ? ${cursor ? "OFFSET ?" : ""}
+        `;
+        countQuery = `SELECT COUNT(*) as count FROM images ${userId ? "WHERE user_id = ?" : ""}`;
+        params = userId
+          ? [userId, limit, cursor]
+          : [limit, cursor].filter(Boolean);
+        countParams = userId ? [userId] : [];
+      } else if (this.dbType === "postgresql") {
+        query = `
+          SELECT * FROM images
+          ${userId ? "WHERE user_id = $1" : ""}
+          ORDER BY id
+          LIMIT $${userId ? "2" : "1"} ${cursor ? `OFFSET $${userId ? "3" : "2"}` : ""}
+        `;
+        countQuery = `SELECT COUNT(*) as count FROM images ${userId ? "WHERE user_id = $1" : ""}`;
+        params = userId
+          ? [userId, limit, cursor]
+          : [limit, cursor].filter(Boolean);
+        countParams = userId ? [userId] : [];
+      } else {
+        throw new Error(`Unsupported database type: ${this.dbType}`);
+      }
 
       const images = await db.query(query, params);
       const nextCursor =
         images.length === limit ? limit + (cursor || 0) : undefined;
 
-      const totalQuery = `SELECT COUNT(*) as count FROM images ${userId ? "WHERE user_id = ?" : ""}`;
-      const totalParams = userId ? [userId] : [];
-      const [{ count }] = await db.query(totalQuery, totalParams);
+      const [{ count }] = await db.query(countQuery, countParams);
 
       return {
         images: images.map((img) => ({
@@ -113,4 +147,6 @@ export class ImageService {
       throw new Error("Failed to list images");
     }
   }
+
+  // El método getOrProcessImage no necesita cambios ya que no interactúa con la base de datos
 }

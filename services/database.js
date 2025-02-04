@@ -7,6 +7,7 @@ export async function initializeDatabase() {
     db = DatabaseFactory.createDatabase();
     await db.connect();
     await db.initializeTables();
+    await db.seed();
   }
   return db;
 }
