@@ -18,4 +18,17 @@ export const sqliteQueries = {
   `,
   countImages: "SELECT COUNT(*) as count FROM images WHERE user_id = ?",
   countUsers: "SELECT COUNT(*) as count FROM users",
+  listImagesByUser: `
+    SELECT * FROM images
+    WHERE user_id = ?
+    ORDER BY id
+    LIMIT ? OFFSET ?
+  `,
+  listAllImages: `
+    SELECT * FROM images
+    ORDER BY id
+    LIMIT ? OFFSET ?
+  `,
+  countImagesByUser: "SELECT COUNT(*) as count FROM images WHERE user_id = ?",
+  countAllImages: "SELECT COUNT(*) as count FROM images",
 };

@@ -20,4 +20,17 @@ export const postgresQueries = {
   `,
   countImages: "SELECT COUNT(*) as count FROM images WHERE user_id = $1",
   countUsers: "SELECT COUNT(*) as count FROM users",
+  listImagesByUser: `
+    SELECT * FROM images
+    WHERE user_id = $1
+    ORDER BY id
+    LIMIT $2 OFFSET $3
+  `,
+  listAllImages: `
+    SELECT * FROM images
+    ORDER BY id
+    LIMIT $1 OFFSET $2
+  `,
+  countImagesByUser: "SELECT COUNT(*) as count FROM images WHERE user_id = $1",
+  countAllImages: "SELECT COUNT(*) as count FROM images",
 };

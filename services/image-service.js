@@ -61,14 +61,20 @@ export class ImageService {
       const db = await getDatabase();
       const offset = cursor || 0;
 
-      const images = await db.query(this.queries.listImages, [
-        userId,
-        limit,
-        offset,
-      ]);
-      const nextCursor = images.length === limit ? offset + limit : undefined;
+      let images, count;
+      if (userId) {
+        images = await db.query(this.queries.listImagesByUser, [
+          userId,
+          limit,
+          offset,
+        ]);
+        [{ count }] = await db.query(this.queries.countImagesByUser, [userId]);
+      } else {
+        images = await db.query(this.queries.listAllImages, [limit, offset]);
+        [{ count }] = await db.query(this.queries.countAllImages);
+      }
 
-      const [{ count }] = await db.query(this.queries.countImages, [userId]);
+      const nextCursor = images.length === limit ? offset + limit : undefined;
 
       return {
         images: images.map((img) => ({
