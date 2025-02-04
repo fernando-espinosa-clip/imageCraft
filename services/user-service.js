@@ -2,6 +2,8 @@ import { getDatabase } from "./database.js";
 import { generateToken } from "../utils/jwt.js";
 import { getQueries } from "../queries/queryFactory.js";
 
+import stringValues2Array from "../utils/stringValues2Array.js";
+
 export class UserService {
   constructor() {
     this.queries = getQueries();
@@ -28,9 +30,7 @@ export class UserService {
     return user
       ? {
           ...user,
-          file_permissions: Array.isArray(user.file_permissions)
-            ? user.file_permissions
-            : JSON.parse(user.file_permissions),
+          file_permissions: stringValues2Array(user.file_permissions),
         }
       : null;
   }
@@ -41,9 +41,7 @@ export class UserService {
     return user
       ? {
           ...user,
-          file_permissions: Array.isArray(user.file_permissions)
-            ? user.file_permissions
-            : JSON.parse(user.file_permissions),
+          file_permissions: stringValues2Array(user.file_permissions),
         }
       : null;
   }
