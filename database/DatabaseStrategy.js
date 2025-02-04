@@ -1,10 +1,11 @@
 /* eslint-disable no-unused-vars */
 import pg from "pg";
-
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import { seedUsers } from "./seeder.js";
 import { getQueries } from "../queries/queryFactory.js";
+import { createSQLiteTables } from "../queries/sqliteTables.js";
+import { createPostgresTables } from "../queries/postgresTables.js";
 
 export class DatabaseStrategy {
   async connect() {
@@ -31,9 +32,9 @@ export class DatabaseStrategy {
     const queries = getQueries();
     try {
       const [result] = await this.query(queries.countUsers);
-      const userCount = +result.count;
+      const userCount = result.count;
+
       if (userCount === 0) {
-        console.log("Users table is empty. Seeding...");
         await seedUsers(this);
       } else {
         console.log("Users table already has data. Skipping seeding.");
@@ -79,42 +80,7 @@ export class SQLiteStrategy extends DatabaseStrategy {
   }
 
   async initializeTables() {
-    await this.db.exec(`
-            CREATE TABLE IF NOT EXISTS users (
-                                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                 first_name TEXT,
-                                                 last_name TEXT,
-                                                 email TEXT UNIQUE,
-                                                 apikey TEXT UNIQUE,
-                                                 username TEXT UNIQUE,
-                                                 file_permissions TEXT,
-                                                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS images (
-                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                  user_id INTEGER NOT NULL,
-                                                  filename TEXT NOT NULL,
-                                                  path TEXT NOT NULL,
-                                                  file_type TEXT,
-                                                  size INTEGER,
-                                                  original_filename TEXT,
-                                                  original_file_type TEXT,
-                                                  original_size INTEGER,
-                                                  upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                                  tags TEXT,
-                                                  metadata TEXT,
-                                                  FOREIGN KEY (user_id) REFERENCES users (id)
-            );
-
-            CREATE TRIGGER IF NOT EXISTS update_users_updated_at
-                AFTER UPDATE ON users
-                          FOR EACH ROW
-            BEGIN
-            UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-            END;
-        `);
+    await this.db.exec(createSQLiteTables);
     console.log("SQLite tables initialized successfully");
   }
 
@@ -163,49 +129,8 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
   }
 
   async initializeTables() {
-    await this.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                                                 id SERIAL PRIMARY KEY,
-                                                 first_name VARCHAR(50),
-                                                 last_name VARCHAR(50),
-                                                 email VARCHAR(100) UNIQUE,
-                                                 apikey VARCHAR(50) UNIQUE,
-                                                 username VARCHAR(100) UNIQUE,
-                                                 file_permissions TEXT[],
-                                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS images (
-                                                  id SERIAL PRIMARY KEY,
-                                                  user_id INT NOT NULL,
-                                                  filename VARCHAR(255) NOT NULL,
-                                                  path VARCHAR(500) NOT NULL,
-                                                  file_type VARCHAR(100),
-                                                  size INT,
-                                                  original_filename VARCHAR(255),
-                                                  original_file_type VARCHAR(100),
-                                                  original_size INT,
-                                                  upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                                  tags TEXT[],
-                                                  metadata JSONB,
-                                                  CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id)
-            );
-
-            CREATE OR REPLACE FUNCTION update_updated_at()
-                RETURNS TRIGGER AS $$
-            BEGIN
-                NEW.updated_at = CURRENT_TIMESTAMP;
-                RETURN NEW;
-            END;
-            $$ LANGUAGE plpgsql;
-
-            DROP TRIGGER IF EXISTS update_users_updated_at ON users;
-            CREATE TRIGGER update_users_updated_at
-                BEFORE UPDATE ON users
-                FOR EACH ROW
-            EXECUTE FUNCTION update_updated_at();
-        `);
+    await this.query(createPostgresTables);
+    console.log("PostgreSQL tables initialized successfully");
   }
 
   async transaction(callback) {
