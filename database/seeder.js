@@ -1,4 +1,4 @@
-import config from "../config/index.js";
+import { getQueries } from "../queries/queryFactory.js";
 
 const mockUsers = [
   {
@@ -184,45 +184,20 @@ const mockUsers = [
 ];
 
 export async function seedUsers(db) {
-  const dbType = config.database.type;
+  const queries = getQueries();
 
   for (const user of mockUsers) {
     try {
-      let query;
-      let params;
+      const params = [
+        user.first_name,
+        user.last_name,
+        user.email,
+        user.apikey,
+        user.username,
+        JSON.stringify(user.permissions),
+      ];
 
-      if (dbType === "sqlite") {
-        query = `
-          INSERT OR IGNORE INTO users (first_name, last_name, email, apikey, username, file_permissions)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `;
-        params = [
-          user.first_name,
-          user.last_name,
-          user.email,
-          user.apikey,
-          user.username,
-          JSON.stringify(user.permissions),
-        ];
-      } else if (dbType === "postgresql") {
-        query = `
-          INSERT INTO users (first_name, last_name, email, apikey, username, file_permissions)
-          VALUES ($1, $2, $3, $4, $5, $6)
-          ON CONFLICT (email) DO NOTHING
-        `;
-        params = [
-          user.first_name,
-          user.last_name,
-          user.email,
-          user.apikey,
-          user.username,
-          user.permissions,
-        ];
-      } else {
-        throw new Error(`Unsupported database type: ${dbType}`);
-      }
-
-      await db.query(query, params);
+      await db.query(queries.insertUser, params);
     } catch (error) {
       console.error(`Error seeding user ${user.email}:`, error);
     }
