@@ -25,9 +25,13 @@ export class UserService {
   async getUserByApiKey(apiKey) {
     const db = await getDatabase();
     const [user] = await db.query(this.queries.getUserByApiKey, [apiKey]);
-    console.log("user", user);
     return user
-      ? { ...user, file_permissions: JSON.parse(user.file_permissions) }
+      ? {
+          ...user,
+          file_permissions: Array.isArray(user.file_permissions)
+            ? user.file_permissions
+            : JSON.parse(user.file_permissions),
+        }
       : null;
   }
 
@@ -35,7 +39,12 @@ export class UserService {
     const db = await getDatabase();
     const [user] = await db.query(this.queries.getUserById, [id]);
     return user
-      ? { ...user, file_permissions: JSON.parse(user.file_permissions) }
+      ? {
+          ...user,
+          file_permissions: Array.isArray(user.file_permissions)
+            ? user.file_permissions
+            : JSON.parse(user.file_permissions),
+        }
       : null;
   }
 

@@ -188,13 +188,14 @@ export async function seedUsers(db) {
 
   for (const user of mockUsers) {
     try {
+      const textPermissionsArray = `{${user.permissions.map((item) => `"${item}"`).join(",")}}`;
       const params = [
         user.first_name,
         user.last_name,
         user.email,
         user.apikey,
         user.username,
-        JSON.stringify(user.permissions),
+        textPermissionsArray,
       ];
 
       await db.query(queries.insertUser, params);

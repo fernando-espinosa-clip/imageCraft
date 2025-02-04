@@ -4,6 +4,7 @@ import pg from "pg";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import { seedUsers } from "./seeder.js";
+import { getQueries } from "../queries/queryFactory.js";
 
 export class DatabaseStrategy {
   async connect() {
@@ -27,11 +28,18 @@ export class DatabaseStrategy {
   }
 
   async seed() {
-    const usersExist = await this.tableExists("users");
-    if (!usersExist) {
-      await seedUsers();
-    } else {
-      console.log("Users table already exists. Skipping seeding.");
+    const queries = getQueries();
+    try {
+      const [result] = await this.query(queries.countUsers);
+      const userCount = +result.count;
+      if (userCount === 0) {
+        console.log("Users table is empty. Seeding...");
+        await seedUsers(this);
+      } else {
+        console.log("Users table already has data. Skipping seeding.");
+      }
+    } catch (error) {
+      console.error("Error checking or seeding users:", error);
     }
   }
 
@@ -147,7 +155,6 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
   async query(sql, params) {
     const client = await this.pool.connect();
     try {
-      console.log(sql, params);
       const result = await client.query(sql, params);
       return result.rows;
     } finally {

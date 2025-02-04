@@ -19,4 +19,5 @@ export const postgresQueries = {
     LIMIT $2 OFFSET $3
   `,
   countImages: "SELECT COUNT(*) as count FROM images WHERE user_id = $1",
+  countUsers: "SELECT COUNT(*) as count FROM users",
 };

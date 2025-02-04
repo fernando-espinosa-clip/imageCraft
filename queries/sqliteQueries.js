@@ -17,4 +17,5 @@ export const sqliteQueries = {
     LIMIT ? OFFSET ?
   `,
   countImages: "SELECT COUNT(*) as count FROM images WHERE user_id = ?",
+  countUsers: "SELECT COUNT(*) as count FROM users",
 };
