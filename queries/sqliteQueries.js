@@ -1,10 +1,11 @@
 export const sqliteQueries = {
   insertUser: `
-    INSERT OR IGNORE INTO users (first_name, last_name, email, apikey, username, file_permissions)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO users (first_name, last_name, email, apikey, username, password, file_permissions)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `,
   getUserByApiKey: "SELECT * FROM users WHERE apikey = ?",
   getUserById: "SELECT * FROM users WHERE id = ?",
+  getUserByUsername: "SELECT * FROM users WHERE username = ?",
   insertImage: `
     INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -42,4 +43,6 @@ export const sqliteQueries = {
       original_size = excluded.original_size,
       upload_date = CURRENT_TIMESTAMP
   `,
+  updateUserPassword: "UPDATE users SET password = ? WHERE id = ?",
+  updateUserApiKey: "UPDATE users SET apikey = ? WHERE id = ?",
 };
