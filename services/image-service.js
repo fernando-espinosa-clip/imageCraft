@@ -2,10 +2,12 @@ import sharp from "sharp";
 import path from "path";
 import { getDatabase } from "./database.js";
 import { toUrlFriendly } from "../utils/toUrlFriendly.js";
+import { getQueries } from "../queries/queryFactory.js";
 
 export class ImageService {
   constructor(storageStrategy) {
     this.storageStrategy = storageStrategy;
+    this.queries = getQueries();
   }
 
   async processAndUploadImage(file, userId) {
@@ -23,20 +25,18 @@ export class ImageService {
       );
 
       const db = await getDatabase();
-      await db.query(
-        `INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          userId,
-          filename,
-          url,
-          "image/webp",
-          optimizedImageBuffer.length,
-          originalname,
-          mimetype,
-          size,
-        ],
-      );
+      const params = [
+        userId,
+        filename,
+        url,
+        "image/webp",
+        optimizedImageBuffer.length,
+        originalname,
+        mimetype,
+        size,
+      ];
+
+      await db.query(this.queries.upsertImage, params);
 
       return { filename, url };
     } catch (error) {
@@ -45,32 +45,11 @@ export class ImageService {
     }
   }
 
-  async getOrProcessImage(key, params) {
-    try {
-      const buffer = await this.storageStrategy.get(key);
-      return await sharp(buffer)
-        .resize({
-          width: params.width,
-          height: params.height,
-          fit: params.fit,
-          withoutEnlargement: false,
-        })
-        .webp({ quality: params.quality })
-        .toBuffer();
-    } catch (error) {
-      console.error("Error retrieving or processing image:", error);
-      throw new Error("Failed to retrieve or process image");
-    }
-  }
-
   async deleteImage(key, userId) {
     try {
       await this.storageStrategy.delete(key);
       const db = await getDatabase();
-      await db.query("DELETE FROM images WHERE filename = ? AND user_id = ?", [
-        key,
-        userId,
-      ]);
+      await db.query(this.queries.deleteImage, [key, userId]);
     } catch (error) {
       console.error("Error deleting image:", error);
       throw new Error("Failed to delete image");
@@ -80,23 +59,22 @@ export class ImageService {
   async listImages(limit, cursor, userId) {
     try {
       const db = await getDatabase();
-      const query = `
-        SELECT * FROM images
-                        ${userId ? "WHERE user_id = ?" : ""}
-        ORDER BY id
-        LIMIT ? ${cursor ? "OFFSET ?" : ""}
-      `;
-      const params = userId
-        ? [userId, limit, cursor]
-        : [limit, cursor].filter(Boolean);
+      const offset = cursor || 0;
 
-      const images = await db.query(query, params);
-      const nextCursor =
-        images.length === limit ? limit + (cursor || 0) : undefined;
+      let images, count;
+      if (userId) {
+        images = await db.query(this.queries.listImagesByUser, [
+          userId,
+          limit,
+          offset,
+        ]);
+        [{ count }] = await db.query(this.queries.countImagesByUser, [userId]);
+      } else {
+        images = await db.query(this.queries.listAllImages, [limit, offset]);
+        [{ count }] = await db.query(this.queries.countAllImages);
+      }
 
-      const totalQuery = `SELECT COUNT(*) as count FROM images ${userId ? "WHERE user_id = ?" : ""}`;
-      const totalParams = userId ? [userId] : [];
-      const [{ count }] = await db.query(totalQuery, totalParams);
+      const nextCursor = images.length === limit ? offset + limit : undefined;
 
       return {
         images: images.map((img) => ({

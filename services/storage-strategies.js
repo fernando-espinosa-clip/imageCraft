@@ -3,12 +3,11 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   ListObjectsV2Command,
+  PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
 import fs from "fs/promises";
 import path from "path";
 
-// Implementación de la estrategia para S3
 export class S3StorageStrategy {
   constructor(region, accessKeyId, secretAccessKey, bucketName) {
     this.s3Client = new S3Client({
@@ -22,19 +21,16 @@ export class S3StorageStrategy {
   }
 
   async upload(file, filename) {
-    const upload = new Upload({
-      client: this.s3Client,
-      params: {
-        Bucket: this.bucketName,
-        Key: filename,
-        Body: file,
-        ContentType: "image/webp",
-      },
-    });
+    const params = {
+      Bucket: this.bucketName,
+      Key: filename,
+      Body: file,
+      ContentType: "image/webp",
+    };
 
     try {
-      const result = await upload.done();
-      return result.Location;
+      await this.s3Client.send(new PutObjectCommand(params));
+      return `https://${this.bucketName}.s3.amazonaws.com/${filename}`;
     } catch (error) {
       console.error("Error uploading to S3", error);
       throw error;
@@ -96,7 +92,6 @@ export class S3StorageStrategy {
   }
 }
 
-// Implementación de la estrategia para almacenamiento local
 export class LocalStorageStrategy {
   constructor(storagePath) {
     this.storagePath = storagePath;

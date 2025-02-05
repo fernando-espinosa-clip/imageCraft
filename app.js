@@ -39,6 +39,10 @@ const imageController = new ImageController(imageService);
 app.use("/auth", authRoutes);
 app.use("/images", createImageRouter(imageController));
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK", message: "Server is running" });
+});
+
 app.use(globalErrorHandling);
 
 const startServer = async () => {
