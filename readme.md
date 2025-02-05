@@ -22,6 +22,9 @@
 - **JWT-based Authentication**: Garantiza la seguridad de la API con tokens JWT.
 - **Gestión de permisos**: Implementa controles para acceso seguro entre administradores y usuarios.
 - **Configuración personalizable**: Configuración centralizada mediante el uso de variables de entorno con `dotenv`.
+- **Gestión eficiente de imágenes**: Implementa operaciones UPSERT para actualizar imágenes existentes en lugar de crear duplicados.
+- **Listado flexible de imágenes**: Permite listar todas las imágenes o filtrar por usuario específico.
+- **Soporte para múltiples bases de datos**: Configuración flexible para usar SQLite o PostgreSQL.
 
 ---
 
@@ -51,17 +54,38 @@
    REDIS_HOST=localhost
    REDIS_PORT=6379
    CORS_WHITELIST=http://localhost:5173,https://some-domain.org
+   DB_TYPE=sqlite        # Cambia a "postgresql" para usar PostgreSQL
+   SQLITE_FILENAME=database.sqlite
+   PG_HOST=localhost
+   PG_PORT=5432
+   PG_USER=tu_usuario
+   PG_PASSWORD=tu_contraseña
+   PG_DATABASE=tu_base_de_datos
    ```
 
-4. (Opcional) Crea la carpeta de almacenamiento local (si usas almacenamiento local):
+4. Configuración de la base de datos:
+
+   a. Para SQLite (configuración por defecto):
+    - Asegúrate de que `DB_TYPE=sqlite` en tu archivo `.env`.
+    - Especifica la ruta del archivo de la base de datos con `SQLITE_FILENAME`.
+    - No se requiere configuración adicional, la base de datos se creará automáticamente.
+
+   b. Para PostgreSQL:
+    - Cambia `DB_TYPE=postgresql` en tu archivo `.env`.
+    - Configura las variables `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, y `PG_DATABASE` con los detalles de tu servidor PostgreSQL.
+    - Asegúrate de tener un servidor PostgreSQL en ejecución y accesible con las credenciales proporcionadas.
+
+5. (Opcional) Crea la carpeta de almacenamiento local (si usas almacenamiento local):
    ```bash
    mkdir uploads
    ```
 
-5. Inicia el servidor de desarrollo:
+6. Inicia el servidor de desarrollo:
    ```bash
    npm start
    ```
+
+   La aplicación inicializará automáticamente las tablas necesarias en la base de datos seleccionada (SQLite o PostgreSQL) durante el primer inicio.
 
 ---
 
@@ -76,6 +100,8 @@ A continuación, algunas de las principales librerías utilizadas:
 - **`redis`**: Sistema de almacenamiento en caché para mejorar el rendimiento.
 - **`jsonwebtoken`**: Para usar tokens JWT como método de autenticación.
 - **`dotenv`**: Para configurar variables de entorno.
+- **`sqlite3` y `sqlite`**: Para el soporte de base de datos SQLite.
+- **`pg`**: Para el soporte de base de datos PostgreSQL.
 - **`eslint` + `eslint-config-prettier`**: Para mantener un código limpio y con buenas prácticas.
 
 ---
@@ -97,7 +123,7 @@ El middleware **CORS** (*Cross-Origin Resource Sharing*) define qué dominios pu
    Solicitudes desde dominios no autorizados retornarán:
    ```json
    {
-     "error": "No autorizado por política de CORS"
+   "error": "No autorizado por política de CORS"
    }
    ```
 
@@ -105,8 +131,6 @@ El middleware **CORS** (*Cross-Origin Resource Sharing*) define qué dominios pu
 ```env
 CORS_WHITELIST=http://localhost:5173,https://some-domain.org
 ```
-
----
 
 ## Endpoints Principales
 
@@ -116,13 +140,28 @@ CORS_WHITELIST=http://localhost:5173,https://some-domain.org
 
 ### Gestión de Imágenes
 - **POST /images/upload**  
-  Permite cargar y optimizar imágenes. Compatible tanto con almacenamiento local como en la nube.
-- **GET /images/:id**  
-  Recupera una imagen almacenada.
+  Carga y optimiza imágenes. Actualiza imágenes existentes si se detecta una ruta duplicada.
+- **GET /images/:key**  
+  Recupera una imagen específica por su clave.
 - **GET /images**  
-  Lista todas las imágenes almacenadas, ya sea localmente o en Amazon S3.
-- **DELETE /images/:id**  
+  Lista todas las imágenes o las imágenes de un usuario específico.
+- **DELETE /images/:key**  
   Elimina una imagen del repositorio.
+
+### Monitoreo
+- **GET /health**  
+  Verifica el estado del servidor.
+
+---
+
+## Configuración
+
+El proyecto utiliza archivos de configuración separados para la creación de tablas en diferentes bases de datos:
+
+- `src/queries/sqliteTables.js`: Contiene las queries para crear tablas en SQLite.
+- `src/queries/postgresTables.js`: Contiene las queries para crear tablas en PostgreSQL.
+
+Esto permite una mejor organización y facilita el mantenimiento de las estructuras de base de datos para diferentes sistemas.
 
 ---
 
@@ -175,10 +214,8 @@ Para configurar el tipo de almacenamiento, ajusta la variable en `.env`:
 
 | Comando               | Descripción                              |
 |-----------------------|------------------------------------------|
-| `npm start`           | Inicia el servidor en producción.        |
 | `npm run dev`         | Ejecuta el servidor en modo desarrollo.  |
 | `npm run lint`        | Valida y corrige errores de estilo.      |
-| `npm run build`       | Genera un build para producción.         |
 
 ---
 
@@ -208,3 +245,15 @@ Para configurar el tipo de almacenamiento, ajusta la variable en `.env`:
 ---
 
 **GitHub**: [Repositorio Oficial](https://github.com/tuusuario/imagecraft)
+
+---
+
+## Novedades
+
+- **Health Check**: Se ha añadido un endpoint `/health` para monitorear el estado del servidor.
+- **UPSERT para imágenes**: Ahora, al subir una imagen con una ruta existente, se actualiza el registro en lugar de crear uno nuevo.
+- **Listado flexible**: La función `listImages` ahora permite listar todas las imágenes o filtrar por usuario.
+- **Refactorización de queries**: Las queries de creación de tablas se han movido a archivos separados para mejorar la organización del código.
+- **Soporte para múltiples bases de datos**: Se ha añadido soporte para SQLite y PostgreSQL, con configuración flexible a través de variables de entorno.
+
+
