@@ -32,7 +32,7 @@ export class DatabaseStrategy {
     const queries = getQueries();
     try {
       const [result] = await this.query(queries.countUsers);
-      const userCount = result.count;
+      const userCount = +result.count;
 
       if (userCount === 0) {
         await seedUsers(this);

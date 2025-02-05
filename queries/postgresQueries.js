@@ -33,4 +33,16 @@ export const postgresQueries = {
   `,
   countImagesByUser: "SELECT COUNT(*) as count FROM images WHERE user_id = $1",
   countAllImages: "SELECT COUNT(*) as count FROM images",
+  upsertImage: `
+    INSERT INTO images (user_id, filename, path, file_type, size, original_filename, original_file_type, original_size)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT (path) DO UPDATE SET
+       file_type = EXCLUDED.file_type,
+       size = EXCLUDED.size,
+       original_filename = EXCLUDED.original_filename,
+       original_file_type = EXCLUDED.original_file_type,
+       original_size = EXCLUDED.original_size,
+       upload_date = CURRENT_TIMESTAMP
+    RETURNING *
+  `,
 };

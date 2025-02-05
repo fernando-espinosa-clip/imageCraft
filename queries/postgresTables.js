@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS images (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     filename VARCHAR(255) NOT NULL,
-    path VARCHAR(500) NOT NULL,
+    path VARCHAR(500) NOT NULL UNIQUE,
     file_type VARCHAR(100),
     size INT,
     original_filename VARCHAR(255),

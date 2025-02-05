@@ -36,7 +36,7 @@ export class ImageService {
         size,
       ];
 
-      await db.query(this.queries.insertImage, params);
+      await db.query(this.queries.upsertImage, params);
 
       return { filename, url };
     } catch (error) {
@@ -91,6 +91,4 @@ export class ImageService {
       throw new Error("Failed to list images");
     }
   }
-
-  // El método getOrProcessImage no necesita cambios ya que no interactúa con la base de datos
 }
