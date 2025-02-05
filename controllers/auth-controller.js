@@ -43,7 +43,11 @@ export const loginWithApiKey = async (req, res, next) => {
 };
 
 export const renewToken = (req, res) => {
-  const newToken = generateToken(req.user);
+  const newToken = generateToken({
+    id: req.user.id,
+    permissions: req.user.permissions,
+    apiKey: req.user.apiKey,
+  });
   res.json({ token: newToken });
 };
 
