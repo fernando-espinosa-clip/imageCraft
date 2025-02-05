@@ -1,21 +1,17 @@
 import jwt from "jsonwebtoken";
 import config from "../config/index.js";
-import { decrypt, encrypt } from "./encrypt.js";
+import { decrypt } from "./encrypt.js";
 
 // Función para generar token JWT
-export function generateToken(user) {
-  const api = encrypt(user.apiKey);
-  return (
-    jwt.sign(
-      {
-        userId: user.id,
-        permissions: user.permissions,
-      },
-      process.env.JWT_SECRET + user.apiKey,
-      { expiresIn: "1h" },
-    ) +
-    "." +
-    api
+export function generateToken(user, loginMode) {
+  return jwt.sign(
+    {
+      userId: user.id,
+      permissions: user.permissions,
+      loginMode: loginMode, // 'credentials' o 'apikey'
+    },
+    process.env.JWT_SECRET + user.apiKey,
+    { expiresIn: "1h" },
   );
 }
 

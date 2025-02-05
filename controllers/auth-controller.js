@@ -13,7 +13,11 @@ export const loginWithCredentials = async (req, res, next) => {
   }
 
   try {
-    const token = await userService.authenticateUser(username, password);
+    const token = await userService.authenticateUser(
+      username,
+      password,
+      "credentials",
+    );
     if (token) {
       res.json({ token });
     } else {
@@ -31,7 +35,7 @@ export const loginWithApiKey = async (req, res, next) => {
   }
 
   try {
-    const token = await userService.authenticateUserByApiKey(apiKey);
+    const token = await userService.authenticateUserByApiKey(apiKey, "apikey");
     if (token) {
       res.json({ token });
     } else {
@@ -43,11 +47,14 @@ export const loginWithApiKey = async (req, res, next) => {
 };
 
 export const renewToken = (req, res) => {
-  const newToken = generateToken({
-    id: req.user.id,
-    permissions: req.user.permissions,
-    apiKey: req.user.apiKey,
-  });
+  const newToken = generateToken(
+    {
+      id: req.user.id,
+      permissions: req.user.permissions,
+      apiKey: req.user.apiKey,
+    },
+    req.user.loginMode,
+  );
   res.json({ token: newToken });
 };
 
@@ -67,7 +74,7 @@ export const register = async (req, res, next) => {
       password,
       file_permissions: ["upload", "list"], // Permisos por defecto
     });
-    const token = generateToken(newUser);
+    const token = generateToken(newUser, "credentials");
     res.status(201).json({ user: newUser, token });
   } catch (error) {
     if (error instanceof UniqueConstraintError) {

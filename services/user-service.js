@@ -53,7 +53,7 @@ export class UserService {
       : null;
   }
 
-  async authenticateUser(username, password) {
+  async authenticateUser(username, password, loginMode) {
     const db = await getDatabase();
     const [user] = await db.query(this.queries.getUserByUsername, [username]);
     if (!user) return null;
@@ -61,21 +61,27 @@ export class UserService {
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) return null;
 
-    return generateToken({
-      id: user.id,
-      permissions: stringValues2Array(user.file_permissions),
-      apiKey: user.apikey,
-    });
+    return generateToken(
+      {
+        id: user.id,
+        permissions: stringValues2Array(user.file_permissions),
+        apiKey: user.apikey,
+      },
+      loginMode,
+    );
   }
 
-  async authenticateUserByApiKey(apiKey) {
+  async authenticateUserByApiKey(apiKey, loginMode) {
     const user = await this.getUserByApiKey(apiKey);
     if (!user) return null;
 
-    return generateToken({
-      id: user.id,
-      permissions: user.file_permissions,
-      apiKey: user.apikey,
-    });
+    return generateToken(
+      {
+        id: user.id,
+        permissions: user.file_permissions,
+        apiKey: user.apikey,
+      },
+      loginMode,
+    );
   }
 }
