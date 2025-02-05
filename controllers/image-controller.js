@@ -39,9 +39,11 @@ export class ImageController {
 
     const validFitModes = ["cover", "contain", "fill", "inside", "outside"];
     if (!validFitModes.includes(fit)) {
-      return res.status(400).json({
-        error: `Invalid fit mode. Valid options: ${validFitModes.join(", ")}`,
-      });
+      return res
+        .status(400)
+        .json({
+          error: `Invalid fit mode. Valid options: ${validFitModes.join(", ")}`,
+        });
     }
 
     if (quality < 20 || quality > 80) {
@@ -107,6 +109,46 @@ export class ImageController {
         cursor,
         req.user?.userId,
       );
+      res.json({
+        images: result.images.map((img) => ({
+          uri: `/images/${img.key}`,
+          lastModified: img.lastModified.toISOString(),
+          size: this.formatFileSize(img.size),
+          originalMimetype: img.original_file_type,
+          originalSize: this.formatFileSize(img.original_size),
+        })),
+        nextCursor: result.nextCursor,
+        total: result.total,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteUserImage = async (req, res, next) => {
+    const { key } = req.params;
+    const userId = req.user.userId;
+
+    try {
+      await this.imageService.deleteImage(key, userId);
+      const cacheKeys = await cacheService.keys(`${key}-*`);
+      await cacheService.del(cacheKeys);
+
+      res.json({
+        message: `Image ${key} and its caches have been successfully deleted.`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  listUserImages = async (req, res, next) => {
+    const limit = Number(req.query.limit) || 10;
+    const cursor = req.query.cursor;
+    const userId = req.user.userId;
+
+    try {
+      const result = await this.imageService.listImages(limit, cursor, userId);
       res.json({
         images: result.images.map((img) => ({
           uri: `/images/${img.key}`,

@@ -8,9 +8,9 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 export default {
-  env: process.env.NODE_ENV,
   port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET,
+  jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || "24h", // Nuevo parámetro
   redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
   storageType: process.env.STORAGE_TYPE || "local",
   localStoragePath: process.env.LOCAL_STORAGE_PATH || "./uploads",

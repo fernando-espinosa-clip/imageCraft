@@ -27,7 +27,6 @@ export class S3StorageStrategy {
       Body: file,
       ContentType: "image/webp",
     };
-
     try {
       await this.s3Client.send(new PutObjectCommand(params));
       return `https://${this.bucketName}.s3.amazonaws.com/${filename}`;
