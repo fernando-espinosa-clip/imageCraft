@@ -42,18 +42,22 @@
    ```
 
 3. Configura las variables de entorno:
-   Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+   Crea un archivo `.env` en la raíz del proyecto basándote en el archivo `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+   Luego, edita el archivo `.env` y ajusta los valores según tu configuración:
    ```env
    PORT=3000
    STORAGE_TYPE=local    # Cambia a "s3" para usar almacenamiento en Amazon S3
    LOCAL_UPLOAD_FOLDER=uploads/ # Carpeta para almacenamiento local
+   AWS_REGION=us-east-1
    AWS_ACCESS_KEY_ID=tu_access_key
    AWS_SECRET_ACCESS_KEY=tu_secret_key
-   AWS_BUCKET_NAME=nombre_bucket
+   S3_BUCKET_NAME=nombre_bucket
    JWT_SECRET=tu_jwt_secret
-   REDIS_HOST=localhost
-   REDIS_PORT=6379
-   CORS_WHITELIST=http://localhost:5173,https://some-domain.org
+   REDIS_URL=redis://localhost:6379
+   CORS_WHITELIST=http://localhost:5173,https://tu-dominio-produccion.com
    DB_TYPE=sqlite        # Cambia a "postgresql" para usar PostgreSQL
    SQLITE_FILENAME=database.sqlite
    PG_HOST=localhost
@@ -151,6 +155,30 @@ CORS_WHITELIST=http://localhost:5173,https://some-domain.org
 ### Monitoreo
 - **GET /health**  
   Verifica el estado del servidor.
+
+## Documentación de la API
+
+La documentación detallada de la API está disponible en formato OpenAPI. Puedes encontrar el archivo de especificación en:
+
+```
+documentation/openapi.yaml
+```
+
+Este archivo describe todos los endpoints disponibles, sus parámetros, respuestas y esquemas de datos. Puedes usar herramientas como Swagger UI o Redoc para visualizar esta documentación de forma interactiva.
+
+Para visualizar la documentación:
+
+1. Instala una herramienta de visualización OpenAPI como `redoc-cli`:
+   ```bash
+   npm install -g redoc-cli
+   ```
+
+2. Genera la documentación HTML:
+   ```bash
+   redoc-cli bundle documentation/openapi.yaml
+   ```
+
+3. Abre el archivo HTML generado en tu navegador para ver la documentación interactiva de la API.
 
 ---
 
@@ -255,5 +283,4 @@ Para configurar el tipo de almacenamiento, ajusta la variable en `.env`:
 - **Listado flexible**: La función `listImages` ahora permite listar todas las imágenes o filtrar por usuario.
 - **Refactorización de queries**: Las queries de creación de tablas se han movido a archivos separados para mejorar la organización del código.
 - **Soporte para múltiples bases de datos**: Se ha añadido soporte para SQLite y PostgreSQL, con configuración flexible a través de variables de entorno.
-
 
