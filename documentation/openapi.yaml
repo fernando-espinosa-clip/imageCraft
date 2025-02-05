@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: ImageCraft API
   description: API for image processing and storage with user authentication
-  version: 1.2.0
+  version: 2.3.0
 servers:
   - url: http://localhost:3001
     description: Development server
