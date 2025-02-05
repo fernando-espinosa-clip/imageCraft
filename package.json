@@ -1,6 +1,6 @@
 {
   "name": "imagecraft",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "main": "app.js",
   "type": "module",
   "scripts": {
