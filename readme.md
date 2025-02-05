@@ -248,7 +248,7 @@ Para configurar el tipo de almacenamiento, ajusta la variable en `.env`:
 
 ---
 
-## Novedades
+## Novedades v2.2.0
 
 - **Health Check**: Se ha añadido un endpoint `/health` para monitorear el estado del servidor.
 - **UPSERT para imágenes**: Ahora, al subir una imagen con una ruta existente, se actualiza el registro en lugar de crear uno nuevo.
