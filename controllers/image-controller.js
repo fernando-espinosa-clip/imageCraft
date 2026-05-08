@@ -83,7 +83,7 @@ export class ImageController {
 
   deleteImage = async (req, res, next) => {
     const { key } = req.params;
-    const userId = req.user.loginMode === "apikey" ? req.user.userId : null;
+    const userId = req.user.userId;
 
     try {
       await this.imageService.deleteImage(key, userId);
@@ -101,7 +101,7 @@ export class ImageController {
   listImages = async (req, res, next) => {
     const limit = Number(req.query.limit) || 10;
     const cursor = req.query.cursor;
-    const userId = req.user.loginMode === "apikey" ? req.user.userId : null;
+    const userId = req.user.userId;
 
     try {
       const result = await this.imageService.listImages(limit, cursor, userId);

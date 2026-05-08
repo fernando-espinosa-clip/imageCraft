@@ -1,4 +1,6 @@
 import express from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import config from "./config/index.js";
 import {
   S3StorageStrategy,
@@ -16,8 +18,29 @@ import { initializeDatabase, closeDatabase } from "./services/database.js";
 
 const app = express();
 
+app.use(helmet());
+app.disable("x-powered-by");
 app.use(corsMiddleware);
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Upload limit exceeded, please try again later" },
+});
+
+app.use("/auth", authLimiter);
+app.use("/images/upload", uploadLimiter);
 
 const storageStrategy =
   config.storageType === "s3"

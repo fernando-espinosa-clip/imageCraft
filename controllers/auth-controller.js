@@ -66,6 +66,25 @@ export const register = async (req, res, next) => {
     return res.status(400).json({ error: "All fields are required" });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Invalid email format" });
+  }
+
+  if (password.length < 8) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 8 characters" });
+  }
+
+  const usernameRegex = /^[a-zA-Z0-9_.-]{3,32}$/;
+  if (!usernameRegex.test(username)) {
+    return res.status(400).json({
+      error:
+        "Username must be 3-32 characters and contain only letters, numbers, _ . -",
+    });
+  }
+
   try {
     const newUser = await userService.createUser({
       first_name,

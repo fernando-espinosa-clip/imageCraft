@@ -91,24 +91,33 @@ export class S3StorageStrategy {
   }
 }
 
+function safeJoin(root, filename) {
+  const resolvedRoot = path.resolve(root);
+  const resolvedPath = path.resolve(root, filename);
+  if (!resolvedPath.startsWith(resolvedRoot + path.sep)) {
+    throw new Error("Invalid file path");
+  }
+  return resolvedPath;
+}
+
 export class LocalStorageStrategy {
   constructor(storagePath) {
     this.storagePath = storagePath;
   }
 
   async upload(file, filename) {
-    const filePath = path.join(this.storagePath, filename);
+    const filePath = safeJoin(this.storagePath, filename);
     await fs.writeFile(filePath, file);
     return filePath;
   }
 
   async get(filename) {
-    const filePath = path.join(this.storagePath, filename);
+    const filePath = safeJoin(this.storagePath, filename);
     return fs.readFile(filePath);
   }
 
   async delete(filename) {
-    const filePath = path.join(this.storagePath, filename);
+    const filePath = safeJoin(this.storagePath, filename);
     await fs.unlink(filePath);
   }
 
