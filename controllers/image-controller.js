@@ -85,49 +85,7 @@ export class ImageController {
 
   deleteImage = async (req, res, next) => {
     const { key } = req.params;
-
-    try {
-      await this.imageService.deleteImage(key, req.user?.userId);
-      const cacheKeys = await cacheService.keys(`${key}-*`);
-      await cacheService.del(cacheKeys);
-
-      res.json({
-        message: `Image ${key} and its caches have been successfully deleted.`,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  listImages = async (req, res, next) => {
-    const limit = Number(req.query.limit) || 10;
-    const cursor = req.query.cursor;
-
-    try {
-      const result = await this.imageService.listImages(
-        limit,
-        cursor,
-        req.user?.userId,
-      );
-      res.json({
-        images: result.images.map((img) => ({
-          uri: `/images/${img.key}`,
-          lastModified: img.lastModified.toISOString(),
-          size: this.formatFileSize(img.size),
-          originalMimetype: img.original_file_type,
-          originalSize: this.formatFileSize(img.original_size),
-        })),
-        nextCursor: result.nextCursor,
-        total: result.total,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  deleteUserImage = async (req, res, next) => {
-    const { key } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.loginMode === "apikey" ? req.user.userId : null;
 
     try {
       await this.imageService.deleteImage(key, userId);
@@ -142,17 +100,17 @@ export class ImageController {
     }
   };
 
-  listUserImages = async (req, res, next) => {
+  listImages = async (req, res, next) => {
     const limit = Number(req.query.limit) || 10;
     const cursor = req.query.cursor;
-    const userId = req.user.userId;
+    const userId = req.user.loginMode === "apikey" ? req.user.userId : null;
 
     try {
       const result = await this.imageService.listImages(limit, cursor, userId);
       res.json({
         images: result.images.map((img) => ({
           uri: `/images/${img.key}`,
-          lastModified: img.lastModified.toISOString(),
+          lastModified: new Date(img.lastModified).toISOString(),
           size: this.formatFileSize(img.size),
           originalMimetype: img.original_file_type,
           originalSize: this.formatFileSize(img.original_size),

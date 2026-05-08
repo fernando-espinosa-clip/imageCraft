@@ -135,3 +135,5 @@ dump.rdb
 .vercel
 *.sqlite
 redoc-static.html
+/.claude
+/.omc

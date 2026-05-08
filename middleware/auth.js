@@ -24,9 +24,10 @@ export const authenticateJWT = (requiredPermissions) => (req, res, next) => {
       const timeUntilExpiration = expirationTime - currentTime;
 
       if (timeUntilExpiration < 300000) {
-        // 5 minutos en milisegundos
-        // Generar un nuevo token
-        const newToken = generateToken(user, user.loginMode);
+        const newToken = generateToken(
+          { id: user.userId, permissions: user.permissions, apiKey: user.apiKey },
+          user.loginMode,
+        );
         res.setHeader("X-New-Token", newToken);
       }
 

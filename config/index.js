@@ -10,7 +10,7 @@ dotenv.config();
 export default {
   port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET,
-  jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || "24h", // Nuevo parámetro
+  jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || "24h",
   redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
   storageType: process.env.STORAGE_TYPE || "local",
   localStoragePath: process.env.LOCAL_STORAGE_PATH || "./uploads",

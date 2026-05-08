@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { UserService } from "../services/user-service.js";
 import { generateToken } from "../utils/jwt.js";
 import { UniqueConstraintError } from "../utils/databaseErrors.js";
@@ -7,17 +8,11 @@ const userService = new UserService();
 export const loginWithCredentials = async (req, res, next) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res
-      .status(400)
-      .json({ error: "Username and password are required" });
+    return res.status(400).json({ error: "Username and password are required" });
   }
 
   try {
-    const token = await userService.authenticateUser(
-      username,
-      password,
-      "credentials",
-    );
+    const token = await userService.authenticateUser(username, password, "credentials");
     if (token) {
       res.json({ token });
     } else {
@@ -49,7 +44,7 @@ export const loginWithApiKey = async (req, res, next) => {
 export const renewToken = (req, res) => {
   const newToken = generateToken(
     {
-      id: req.user.id,
+      id: req.user.userId,
       permissions: req.user.permissions,
       apiKey: req.user.apiKey,
     },
@@ -62,7 +57,7 @@ export const register = async (req, res, next) => {
   const { first_name, last_name, email, username, password } = req.body;
 
   if (!first_name || !last_name || !email || !username || !password) {
-    return res.status(400).json({ error: "Todos los campos son requeridos" });
+    return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
@@ -72,10 +67,15 @@ export const register = async (req, res, next) => {
       email,
       username,
       password,
-      file_permissions: ["upload", "list"], // Permisos por defecto
+      apikey: randomUUID(),
+      file_permissions: ["upload", "list"],
     });
-    const token = generateToken(newUser, "credentials");
-    res.status(201).json({ user: newUser, token });
+    const token = generateToken(
+      { id: newUser.id, permissions: newUser.file_permissions, apiKey: newUser.apikey },
+      "credentials",
+    );
+    const { password: _, ...safeUser } = newUser;
+    res.status(201).json({ user: safeUser, token });
   } catch (error) {
     if (error instanceof UniqueConstraintError) {
       return res.status(409).json({ error: error.message });

@@ -15,19 +15,23 @@ export function handleDatabaseError(error) {
     if (error.message.includes("users.username")) {
       throw new UniqueConstraintError("nombre de usuario");
     }
+    if (error.message.includes("users.apikey")) {
+      throw new UniqueConstraintError("API key");
+    }
   }
 
   // PostgreSQL
   if (error.code === "23505") {
-    // Unique violation in PostgreSQL
     if (error.constraint === "users_email_key") {
       throw new UniqueConstraintError("email");
     }
     if (error.constraint === "users_username_key") {
       throw new UniqueConstraintError("nombre de usuario");
     }
+    if (error.constraint === "users_apikey_key") {
+      throw new UniqueConstraintError("API key");
+    }
   }
 
-  // Si no es un error de unicidad conocido, lanzamos el error original
   throw error;
 }
