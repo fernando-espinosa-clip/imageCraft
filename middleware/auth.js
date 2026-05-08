@@ -25,7 +25,11 @@ export const authenticateJWT = (requiredPermissions) => (req, res, next) => {
 
       if (timeUntilExpiration < 300000) {
         const newToken = generateToken(
-          { id: user.userId, permissions: user.permissions, apiKey: user.apiKey },
+          {
+            id: user.userId,
+            permissions: user.permissions,
+            apiKey: user.apiKey,
+          },
           user.loginMode,
         );
         res.setHeader("X-New-Token", newToken);

@@ -8,11 +8,17 @@ const userService = new UserService();
 export const loginWithCredentials = async (req, res, next) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.status(400).json({ error: "Username and password are required" });
+    return res
+      .status(400)
+      .json({ error: "Username and password are required" });
   }
 
   try {
-    const token = await userService.authenticateUser(username, password, "credentials");
+    const token = await userService.authenticateUser(
+      username,
+      password,
+      "credentials",
+    );
     if (token) {
       res.json({ token });
     } else {
@@ -71,7 +77,11 @@ export const register = async (req, res, next) => {
       file_permissions: ["upload", "list"],
     });
     const token = generateToken(
-      { id: newUser.id, permissions: newUser.file_permissions, apiKey: newUser.apikey },
+      {
+        id: newUser.id,
+        permissions: newUser.file_permissions,
+        apiKey: newUser.apikey,
+      },
       "credentials",
     );
     const { password: _, ...safeUser } = newUser;

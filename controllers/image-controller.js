@@ -39,11 +39,9 @@ export class ImageController {
 
     const validFitModes = ["cover", "contain", "fill", "inside", "outside"];
     if (!validFitModes.includes(fit)) {
-      return res
-        .status(400)
-        .json({
-          error: `Invalid fit mode. Valid options: ${validFitModes.join(", ")}`,
-        });
+      return res.status(400).json({
+        error: `Invalid fit mode. Valid options: ${validFitModes.join(", ")}`,
+      });
     }
 
     if (quality < 20 || quality > 80) {
