@@ -15,7 +15,10 @@ export class ImageService {
     const filename = `${toUrlFriendly(path.parse(originalname).name)}.webp`;
 
     try {
-      const optimizedImageBuffer = await sharp(buffer)
+      const optimizedImageBuffer = await sharp(buffer, {
+        limitInputPixels: 25_000_000,
+        failOn: "warning",
+      })
         .webp({ quality: 80 })
         .toBuffer();
 

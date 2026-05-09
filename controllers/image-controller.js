@@ -83,9 +83,10 @@ export class ImageController {
 
   deleteImage = async (req, res, next) => {
     const { key } = req.params;
+    const userId = req.user.userId;
 
     try {
-      await this.imageService.deleteImage(key, req.user?.userId);
+      await this.imageService.deleteImage(key, userId);
       const cacheKeys = await cacheService.keys(`${key}-*`);
       await cacheService.del(cacheKeys);
 
@@ -100,17 +101,14 @@ export class ImageController {
   listImages = async (req, res, next) => {
     const limit = Number(req.query.limit) || 10;
     const cursor = req.query.cursor;
+    const userId = req.user.userId;
 
     try {
-      const result = await this.imageService.listImages(
-        limit,
-        cursor,
-        req.user?.userId,
-      );
+      const result = await this.imageService.listImages(limit, cursor, userId);
       res.json({
         images: result.images.map((img) => ({
           uri: `/images/${img.key}`,
-          lastModified: img.lastModified.toISOString(),
+          lastModified: new Date(img.lastModified).toISOString(),
           size: this.formatFileSize(img.size),
           originalMimetype: img.original_file_type,
           originalSize: this.formatFileSize(img.original_size),

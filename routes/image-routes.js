@@ -11,13 +11,13 @@ export const createImageRouter = (imageController) => {
     upload.array("files", 10),
     imageController.upload,
   );
-  router.get("/:key", imageController.getImage);
+  router.get("/:key", authenticateJWT([]), imageController.getImage);
   router.delete(
     "/:key",
     authenticateJWT(["delete"]),
     imageController.deleteImage,
   );
-  router.get("/", imageController.listImages);
+  router.get("/", authenticateJWT(["list"]), imageController.listImages);
 
   return router;
 };

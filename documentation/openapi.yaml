@@ -1,16 +1,93 @@
 openapi: 3.0.0
 info:
   title: ImageCraft API
-  description: API for image processing and storage
-  version: 1.0.0
+  description: API for image processing and storage with user authentication
+  version: 2.3.0
 servers:
   - url: http://localhost:3001
     description: Development server
 paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    description: JWT token with configurable expiration time
+        '400':
+          description: Bad request
+        '409':
+          description: Conflict - Email or username already exists
+
   /auth/login:
     post:
-      summary: User login
+      summary: User login with credentials
       description: Authenticate a user and return a JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token containing user information, login mode (credentials or apikey), and configurable expiration time
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /auth/login/apikey:
+    post:
+      summary: User login with API key
+      description: Authenticate a user using an API key and return a JWT token
       tags:
         - Authentication
       requestBody:
@@ -32,6 +109,7 @@ paths:
                 properties:
                   token:
                     type: string
+                    description: JWT token containing user information, login mode (credentials or apikey), and configurable expiration time
         '400':
           description: Bad request
         '401':
@@ -55,6 +133,7 @@ paths:
                 properties:
                   token:
                     type: string
+                    description: New JWT token with refreshed expiration time
         '401':
           description: Unauthorized
 
@@ -102,7 +181,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Forbidden
+          description: Forbidden - Insufficient permissions or API key users can only upload their own images
 
   /images/{key}:
     get:
@@ -163,7 +242,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Forbidden
+          description: Forbidden - Insufficient permissions or API key users can only delete their own images
         '404':
           description: Image not found
 
@@ -195,19 +274,7 @@ paths:
                   images:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        uri:
-                          type: string
-                        lastModified:
-                          type: string
-                          format: date-time
-                        size:
-                          type: string
-                        originalMimetype:
-                          type: string
-                        originalSize:
-                          type: string
+                      $ref: '#/components/schemas/Image'
                   nextCursor:
                     type: string
                   total:
@@ -215,7 +282,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Forbidden
+          description: Forbidden - API key users can only list their own images
 
   /health:
     get:
@@ -242,4 +309,46 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        apikey:
+          type: string
+        file_permissions:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Image:
+      type: object
+      properties:
+        uri:
+          type: string
+        lastModified:
+          type: string
+          format: date-time
+        size:
+          type: string
+        originalMimetype:
+          type: string
+        originalSize:
+          type: string
 

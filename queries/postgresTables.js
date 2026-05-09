@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) UNIQUE,
     apikey VARCHAR(50) UNIQUE,
     username VARCHAR(100) UNIQUE,
+    password VARCHAR(255) NOT NULL,
     file_permissions TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -160,71 +160,39 @@ CORS_WHITELIST=http://localhost:5173,https://some-domain.org
 
 La documentación detallada de la API está disponible en formato OpenAPI. Puedes encontrar el archivo de especificación en:
 
+
 ```
 documentation/openapi.yaml
 ```
 
 Este archivo describe todos los endpoints disponibles, sus parámetros, respuestas y esquemas de datos. Puedes usar herramientas como Swagger UI o Redoc para visualizar esta documentación de forma interactiva.
 
-Para visualizar la documentación:
 
-1. Instala una herramienta de visualización OpenAPI como `redoc-cli`:
+### Visualizar la Documentación con @redocly/cli
+
+Se puede utilizar el paquete `@redocly/cli` para generar y visualizar la documentación OpenAPI localmente.
+
+### Pasos para Generar la Documentación:
+
+1. Instala el paquete `@redocly/cli` globalmente o como una dependencia de tu proyecto:
    ```bash
-   npm install -g redoc-cli
+   npm install -g @redocly/cli
    ```
 
-2. Genera la documentación HTML:
+2. Genera la documentación en formato HTML:
    ```bash
-   redoc-cli bundle documentation/openapi.yaml
+   npx @redocly/cli build-docs documentation/openapi.yaml
    ```
 
-3. Abre el archivo HTML generado en tu navegador para ver la documentación interactiva de la API.
+   Esto generará un archivo `redoc-static.html` en el directorio actual.
+
+3. Abre el archivo HTML generado en tu navegador para ver la documentación interactiva.
 
 ---
 
 ## Configuración
 
-El proyecto utiliza archivos de configuración separados para la creación de tablas en diferentes bases de datos:
-
-- `src/queries/sqliteTables.js`: Contiene las queries para crear tablas en SQLite.
-- `src/queries/postgresTables.js`: Contiene las queries para crear tablas en PostgreSQL.
-
-Esto permite una mejor organización y facilita el mantenimiento de las estructuras de base de datos para diferentes sistemas.
-
----
-
-## Parámetros para Servir Imágenes
-
-El servicio procesa dinámicamente las imágenes solicitadas, permitiendo ajustar su tamaño, calidad y método de ajuste (*fit*) al momento de servirlas.
-
-### Parámetros Disponibles:
-
-1. **width (ancho):** Define el ancho de la imagen en píxeles.
-2. **height (alto):** Define el alto de la imagen en píxeles.
-3. **fit (ajuste):** Controla cómo ajustar la imagen:
-    - `cover` (por defecto): Recorta para llenar el espacio.
-    - `contain`: Ajusta la imagen sin recortarla.
-    - `fill`: Rellena el espacio aunque haya distorsión.
-    - `inside`: Encaja dentro de las dimensiones sin desbordar.
-    - `outside`: Puede salir del espacio, pero conserva proporción.
-4. **quality (calidad):** Calidad para imágenes `.webp` (1-100, por defecto **80**).
-
-### Ejemplo de Uso:
-Solicitud con parámetros:
-```http
-GET /images/example-image.webp?width=400&height=300&fit=contain&quality=70
-```
-
-### Comportamiento por Omisión:
-- **width/height:** Si no se incluyen, no se aplica redimensionado.
-- **fit:** Valor por defecto: `cover`.
-- **quality:** Valor por defecto: `80`.
-
----
-
-## Almacenamiento
-
-### Opciones Disponibles:
+### Opciones de Almacenamiento
 
 1. **Almacenamiento en la Nube**:  
    Las imágenes se alojarán en Amazon S3 (necesita configuración en `.env`).
@@ -247,7 +215,7 @@ Para configurar el tipo de almacenamiento, ajusta la variable en `.env`:
 
 ---
 
-## Cómo Contribuir
+## Contribuir
 
 1. Haz un fork del repositorio.
 2. Crea una nueva rama para tus cambios:

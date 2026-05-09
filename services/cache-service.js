@@ -32,7 +32,14 @@ class CacheService {
   }
 
   async keys(pattern) {
-    return this.client.keys(pattern);
+    const keys = [];
+    for await (const key of this.client.scanIterator({
+      MATCH: pattern,
+      COUNT: 100,
+    })) {
+      keys.push(key);
+    }
+    return keys;
   }
 
   generateImageHash(key, params) {

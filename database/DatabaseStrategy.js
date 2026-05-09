@@ -29,6 +29,9 @@ export class DatabaseStrategy {
   }
 
   async seed() {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
     const queries = getQueries();
     try {
       const [result] = await this.query(queries.countUsers);
@@ -107,7 +110,7 @@ export class PostgreSQLStrategy extends DatabaseStrategy {
     this.pool = new pg.Pool({
       ...this.config,
       ssl: {
-        rejectUnauthorized: false, // Permite conexiones sin verificar el certificado (útil en desarrollo)
+        rejectUnauthorized: process.env.NODE_ENV === "production",
       },
     });
   }
